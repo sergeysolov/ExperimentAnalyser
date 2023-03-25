@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>chageChartSettingsForm</class>
+ <widget class="QWidget" name="chageChartSettingsForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>414</width>
+    <height>244</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QDoubleSpinBox" name="minXdoubleSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>40</y>
+     <width>67</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="decimals">
+    <number>1</number>
+   </property>
+   <property name="minimum">
+    <double>0.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>1000000000.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>50.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="maxXdoubleSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>40</y>
+     <width>67</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="decimals">
+    <number>1</number>
+   </property>
+   <property name="minimum">
+    <double>0.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>1000000000.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>50.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QLabel" name="x_range_const_label">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>10</y>
+     <width>63</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>X range:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="y_range_const_label">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>80</y>
+     <width>63</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Y range:</string>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="maxYdoubleSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>110</y>
+     <width>67</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="decimals">
+    <number>0</number>
+   </property>
+   <property name="minimum">
+    <double>-1000000000.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>1000000000.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>500.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="minYdoubleSpinBox">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>110</y>
+     <width>67</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="decimals">
+    <number>0</number>
+   </property>
+   <property name="minimum">
+    <double>-1000000000.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>1000000000.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>100.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QLabel" name="min_x_range_const_label">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>45</y>
+     <width>31</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>min:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="max_x_range_const_label">
+   <property name="geometry">
+    <rect>
+     <x>115</x>
+     <y>45</y>
+     <width>31</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>max:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="max_y_range_const_label">
+   <property name="geometry">
+    <rect>
+     <x>115</x>
+     <y>115</y>
+     <width>31</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>max:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="min_y_range_const_label">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>115</y>
+     <width>31</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>min:</string>
+   </property>
+  </widget>
+  <widget class="QDialogButtonBox" name="okCancel_buttonBox">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>190</y>
+     <width>161</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>10</y>
+     <width>151</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Preset</string>
+   </property>
+   <widget class="QRadioButton" name="manualSettings_radioButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>131</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Manual settings</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="fitToLines_radioButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>112</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Fit to lines</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="defaultAxes_radioButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>90</y>
+      <width>112</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Default axes</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>minXdoubleSpinBox</tabstop>
+  <tabstop>maxXdoubleSpinBox</tabstop>
+  <tabstop>minYdoubleSpinBox</tabstop>
+  <tabstop>maxYdoubleSpinBox</tabstop>
+  <tabstop>manualSettings_radioButton</tabstop>
+  <tabstop>fitToLines_radioButton</tabstop>
+  <tabstop>defaultAxes_radioButton</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
