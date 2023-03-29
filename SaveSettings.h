@@ -1,16 +1,9 @@
 #ifndef SAVESETTINGS_H
 #define SAVESETTINGS_H
-
-
+#include <set>
 
 struct SaveSettings
 {
-    enum FileFormat
-    {
-        txt,
-        csv,
-        xlsx
-    };
 
     SaveSettings() = default;
     SaveSettings(bool time, bool x, bool y, int time_measurement) :
@@ -24,6 +17,11 @@ struct SaveSettings
     bool y = false;
     int time_measurement = 0;
     bool comma = true;
+
+    bool normalize_y = false;
+    bool save_norm_column = false;
+    bool save_column_titles = false;
+    std::set<int> experiments;
 };
 
 #endif // SAVESETTINGS_H

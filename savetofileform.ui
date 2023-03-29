@@ -6,17 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>498</width>
-    <height>228</height>
+    <width>471</width>
+    <height>381</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Save file settings</string>
   </property>
   <widget class="QGroupBox" name="timeMeasureGroupBox">
    <property name="geometry">
     <rect>
-     <x>200</x>
+     <x>190</x>
      <y>20</y>
      <width>121</width>
      <height>141</height>
@@ -94,8 +94,8 @@
   <widget class="QPushButton" name="save_pushButton">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>180</y>
+     <x>180</x>
+     <y>330</y>
      <width>83</width>
      <height>29</height>
     </rect>
@@ -107,8 +107,8 @@
   <widget class="QPushButton" name="calncel_pushButton">
    <property name="geometry">
     <rect>
-     <x>120</x>
-     <y>180</y>
+     <x>270</x>
+     <y>330</y>
      <width>83</width>
      <height>29</height>
     </rect>
@@ -123,7 +123,7 @@
      <x>20</x>
      <y>20</y>
      <width>161</width>
-     <height>131</height>
+     <height>151</height>
     </rect>
    </property>
    <property name="title">
@@ -168,11 +168,24 @@
      <string>x, wavelength</string>
     </property>
    </widget>
+   <widget class="QCheckBox" name="save_noramization_checkBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>120</y>
+      <width>121</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>norm. column</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>340</x>
+     <x>320</x>
      <y>20</y>
      <width>131</width>
      <height>121</height>
@@ -207,6 +220,58 @@
      <string>.      123.4</string>
     </property>
    </widget>
+  </widget>
+  <widget class="QListWidget" name="experiments_listWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>200</y>
+     <width>141</width>
+     <height>161</height>
+    </rect>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="experiments_const_label">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>180</y>
+     <width>141</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Save experiments:</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="save_normalized_y_checkBox">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>210</y>
+     <width>161</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Normalize y values</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="save_column_titles_checkBox">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>190</y>
+     <width>151</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Save column titles</string>
+   </property>
   </widget>
  </widget>
  <resources/>

@@ -85,7 +85,6 @@ void chageChartSettingsForm::on_defaultAxes_radioButton_clicked()
 void chageChartSettingsForm::closeEvent(QCloseEvent *event)
 {
     AxesRange range = get_values_from_spin_boxes();
-
     emit returnResult({false, range});
     QWidget::closeEvent(event);
 }

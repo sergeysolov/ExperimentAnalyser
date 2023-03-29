@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1332</width>
-    <height>673</height>
+    <width>1427</width>
+    <height>692</height>
    </rect>
   </property>
   <property name="font">
@@ -23,7 +23,7 @@
     <property name="geometry">
      <rect>
       <x>790</x>
-      <y>47</y>
+      <y>30</y>
       <width>92</width>
       <height>36</height>
      </rect>
@@ -37,20 +37,6 @@
      <string>Open File</string>
     </property>
    </widget>
-   <widget class="QLabel" name="coord_label">
-    <property name="geometry">
-     <rect>
-      <x>790</x>
-      <y>80</y>
-      <width>81</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>x: - 
-y: -</string>
-    </property>
-   </widget>
    <widget class="QFrame" name="horizontalFrame">
     <property name="enabled">
      <bool>true</bool>
@@ -58,7 +44,7 @@ y: -</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>30</y>
+      <y>50</y>
       <width>761</width>
       <height>571</height>
      </rect>
@@ -70,15 +56,24 @@ y: -</string>
      <rect>
       <x>790</x>
       <y>290</y>
-      <width>301</width>
-      <height>311</height>
+      <width>531</width>
+      <height>331</height>
      </rect>
     </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="lineWidth">
+     <number>1</number>
+    </property>
     <property name="verticalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOn</enum>
+     <enum>Qt::ScrollBarAlwaysOff</enum>
     </property>
     <property name="horizontalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOff</enum>
+     <enum>Qt::ScrollBarAsNeeded</enum>
+    </property>
+    <property name="sizeAdjustPolicy">
+     <enum>QAbstractScrollArea::AdjustToContents</enum>
     </property>
     <attribute name="horizontalHeaderDefaultSectionSize">
      <number>80</number>
@@ -95,12 +90,12 @@ y: -</string>
     </column>
     <column>
      <property name="text">
-      <string>x</string>
+      <string>x1</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>y</string>
+      <string>y1</string>
      </property>
     </column>
    </widget>
@@ -108,19 +103,19 @@ y: -</string>
     <property name="geometry">
      <rect>
       <x>790</x>
-      <y>160</y>
+      <y>170</y>
       <width>251</width>
       <height>111</height>
      </rect>
     </property>
     <property name="title">
-     <string/>
+     <string>Time point</string>
     </property>
     <widget class="QDoubleSpinBox" name="timeNumberDoubleSpinBox">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
+       <y>40</y>
        <width>101</width>
        <height>31</height>
       </rect>
@@ -135,26 +130,13 @@ y: -</string>
       <double>1.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLabel" name="TimeTextLabel">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>91</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Time:</string>
-     </property>
-    </widget>
     <widget class="QGroupBox" name="timeMeasureGroupBox">
      <property name="geometry">
       <rect>
        <x>130</x>
-       <y>0</y>
+       <y>10</y>
        <width>121</width>
-       <height>111</height>
+       <height>101</height>
       </rect>
      </property>
      <property name="title">
@@ -164,7 +146,7 @@ y: -</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>0</y>
         <width>112</width>
         <height>26</height>
        </rect>
@@ -177,7 +159,7 @@ y: -</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>30</y>
+        <y>20</y>
         <width>112</width>
         <height>26</height>
        </rect>
@@ -190,7 +172,7 @@ y: -</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>50</y>
+        <y>40</y>
         <width>112</width>
         <height>26</height>
        </rect>
@@ -203,7 +185,7 @@ y: -</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>70</y>
+        <y>60</y>
         <width>112</width>
         <height>26</height>
        </rect>
@@ -217,8 +199,8 @@ y: -</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>67</y>
-       <width>80</width>
+       <y>70</y>
+       <width>51</width>
        <height>36</height>
       </rect>
      </property>
@@ -226,19 +208,19 @@ y: -</string>
       <string>Add</string>
      </property>
     </widget>
-   </widget>
-   <widget class="QPushButton" name="delete_line_from_current_list_pushButton">
-    <property name="geometry">
-     <rect>
-      <x>1050</x>
-      <y>236</y>
-      <width>41</width>
-      <height>36</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Del</string>
-    </property>
+    <widget class="QPushButton" name="delete_line_from_current_list_pushButton">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>70</y>
+       <width>51</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Del</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QLabel" name="currentFile_const_label">
     <property name="enabled">
@@ -246,9 +228,9 @@ y: -</string>
     </property>
     <property name="geometry">
      <rect>
-      <x>697</x>
+      <x>790</x>
       <y>0</y>
-      <width>111</width>
+      <width>101</width>
       <height>31</height>
      </rect>
     </property>
@@ -259,9 +241,9 @@ y: -</string>
    <widget class="QLabel" name="currentFile_label">
     <property name="geometry">
      <rect>
-      <x>785</x>
+      <x>890</x>
       <y>0</y>
-      <width>351</width>
+      <width>251</width>
       <height>31</height>
      </rect>
     </property>
@@ -273,7 +255,7 @@ y: -</string>
     <property name="geometry">
      <rect>
       <x>890</x>
-      <y>47</y>
+      <y>30</y>
       <width>122</width>
       <height>36</height>
      </rect>
@@ -285,48 +267,226 @@ y: -</string>
    <widget class="QListWidget" name="opend_files_listWidget">
     <property name="geometry">
      <rect>
-      <x>1110</x>
-      <y>50</y>
-      <width>201</width>
-      <height>271</height>
+      <x>1140</x>
+      <y>30</y>
+      <width>211</width>
+      <height>251</height>
      </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
     </property>
    </widget>
    <widget class="QLabel" name="opened_files_const_label">
     <property name="geometry">
      <rect>
-      <x>1110</x>
-      <y>20</y>
+      <x>1140</x>
+      <y>0</y>
       <width>191</width>
-      <height>20</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
      <string>Opened files:</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="experiments_listWidget">
+   <widget class="QGroupBox" name="add_options_groupBox">
     <property name="geometry">
      <rect>
-      <x>1110</x>
-      <y>370</y>
-      <width>201</width>
-      <height>231</height>
+      <x>930</x>
+      <y>70</y>
+      <width>181</width>
+      <height>101</height>
      </rect>
     </property>
+    <property name="title">
+     <string>Add options</string>
+    </property>
+    <widget class="QRadioButton" name="add_exp_point_radioButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>40</y>
+       <width>161</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add exp. point</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="add_norm_value_radioButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>171</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add norm. value</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="add_time_point_radioButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>161</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add time point</string>
+     </property>
+    </widget>
    </widget>
-   <widget class="QLabel" name="experiments_const_label">
+   <widget class="QLabel" name="coord_label">
     <property name="geometry">
      <rect>
-      <x>1110</x>
-      <y>340</y>
-      <width>191</width>
-      <height>20</height>
+      <x>670</x>
+      <y>0</y>
+      <width>111</width>
+      <height>54</height>
      </rect>
     </property>
     <property name="text">
-     <string>Experiments:</string>
+     <string>x: - 
+y: -</string>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>790</x>
+      <y>70</y>
+      <width>131</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Experiment</string>
+    </property>
+    <widget class="QPushButton" name="delete_experiment_pushButton">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>20</y>
+       <width>30</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="icons.qrc">
+       <normaloff>:/delete icon.png</normaloff>:/delete icon.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="show_x_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>70</y>
+       <width>93</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Show x</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="change_experiment_name_pushButton">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>20</y>
+       <width>30</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="icons.qrc">
+       <normaloff>:/change icon.png</normaloff>:/change icon.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>26</width>
+       <height>26</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="use_normalization_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>121</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Normalize</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="add_new_experiment_pushButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>30</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="icons.qrc">
+       <normaloff>:/add icon.png</normaloff>:/add icon.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QTableWidget" name="normalization_tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>1320</x>
+      <y>290</y>
+      <width>95</width>
+      <height>331</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOn</enum>
+    </property>
+    <property name="autoScrollMargin">
+     <number>14</number>
+    </property>
+    <column>
+     <property name="text">
+      <string>norm.</string>
+     </property>
+    </column>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -335,7 +495,7 @@ y: -</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1332</width>
+     <width>1427</width>
      <height>32</height>
     </rect>
    </property>
@@ -361,8 +521,15 @@ y: -</string>
     <addaction name="actionOpen_file"/>
     <addaction name="actionSave_to_file"/>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionAuto_cell_switching"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuChart"/>
+   <addaction name="menuOptions"/>
   </widget>
   <action name="actionChange_axes_range">
    <property name="text">
@@ -394,7 +561,27 @@ y: -</string>
     <string>Open file</string>
    </property>
   </action>
+  <action name="actionAuto_cell_switching">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="applications-other">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Auto cell switching</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

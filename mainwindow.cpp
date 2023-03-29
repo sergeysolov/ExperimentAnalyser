@@ -16,19 +16,50 @@ constexpr float default_min_X = 350, default_max_X = 750;
 constexpr float default_min_Y = -100;
 constexpr std::pair<float, float> max_range = {500, 650};
 
+constexpr QColor Y_colomn_color = QColor{195, 255, 250};
 constexpr std::array<QColor, 10> colors = { QColor(31, 119, 180), QColor(255, 127, 14), QColor(44, 160, 44),
                       QColor(214, 39, 40), QColor(148, 103, 189), QColor(140, 86, 75),
                       QColor(227, 119, 194), QColor(127, 127, 127), QColor(188, 189, 34),
                       QColor(23, 190, 207) };
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), result_form(new result_chart_form()), ui(new Ui::MainWindow), chart_settings_form(new chageChartSettingsForm()), save_to_file_form(new SaveToFileForm)
+    : QMainWindow(parent), ui(new Ui::MainWindow), result_form(new result_chart_form()), chart_settings_form(new chageChartSettingsForm()), save_to_file_form(new SaveToFileForm)
 {
     ui->setupUi(this);
     this->current_data_table_widget.table_widget = ui->current_table_listWidget;
+    this->current_data_table_widget.norm_table_widget = ui->normalization_tableWidget;
+    this->current_data_table_widget.addExperiment_name("y1");
+    this->current_data_table_widget.set_show_x(false);
+
+    experiment_name_change_form.reset(new Experiment_Name_Form());
+    connect(experiment_name_change_form.get(), &Experiment_Name_Form::form_closed, this, &MainWindow::change_experiment_name_form_closed);
+    experiment_name_change_form->setWindowFlags(experiment_name_change_form->windowFlags() & ~Qt::WindowMaximizeButtonHint);
+
+    add_new_experiment_form.reset(new AddNewExperimentForm());
+    connect(add_new_experiment_form.get(), &AddNewExperimentForm::form_closed, this, &MainWindow::add_new_experiment_form_closed);
+    add_new_experiment_form->setWindowFlags(add_new_experiment_form->windowFlags() & ~Qt::WindowMaximizeButtonHint);
+
     ui->current_table_listWidget->setColumnWidth(0, 62);
     ui->current_table_listWidget->setColumnWidth(1, 50);
     ui->current_table_listWidget->setLocale(QLocale::English);
+    //ui->current_table_listWidget->horizontalHeaderItem(3)->setSelected(true);
+
+    ui->normalization_tableWidget->setColumnWidth(0, 80);
+    ui->normalization_tableWidget->verticalHeader()->hide();
+    ui->normalization_tableWidget->setLocale(QLocale::English);
+
+    DoubleSpinBoxDelegate *delegate = new DoubleSpinBoxDelegate;
+    ui->normalization_tableWidget->setItemDelegate(delegate);
+
+    connect(ui->current_table_listWidget->verticalScrollBar(), &QScrollBar::valueChanged, ui->normalization_tableWidget->verticalScrollBar(),
+        [this](int value){
+            ui->normalization_tableWidget->verticalScrollBar()->setValue(value);
+        }
+    );
+    connect(ui->normalization_tableWidget->verticalScrollBar(), &QScrollBar::valueChanged, current_data_table_widget.table_widget->verticalScrollBar(), &QScrollBar::setValue);
+
+    //ui->add_norm_value_radioButton->setEnabled(false);
+    ui->add_time_point_radioButton->setChecked(true);
 
     //Replacing double_spin_box
     double_spin_box_container.reset(new DoubleSpinBoxContainer(ui->timeGroupBox));
@@ -47,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     chart_settings_form->setWindowFlags(chart_settings_form->windowFlags() & ~Qt::WindowMaximizeButtonHint);
     connect(chart_settings_form.get(), &chageChartSettingsForm::returnResult, this, &MainWindow::change_chart_setting_form_closed);
+    chart_settings_form->setWindowFlags(chart_settings_form->windowFlags() & ~Qt::WindowMaximizeButtonHint);
 
     connect(ui->actionChange_axes_range, &QAction::triggered, this, &MainWindow::actionChange_axes_range_triggered);
     connect(ui->actionSave_to_file, &QAction::triggered, this, &MainWindow::action_save_to_file_triggered);
@@ -55,11 +87,15 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAbsorbtion, &QAction::triggered, this, &MainWindow::action_change_Y_name_to_absorbtion);
     connect(ui->actionReflection, &QAction::triggered, this, &MainWindow::action_change_Y_name_to_reflection);
 
+    connect(ui->actionAuto_cell_switching, &QAction::toggled, this, &MainWindow::action_auto_cell_switch_check_box_state_changed);
+
     connect(save_to_file_form.get(), &SaveToFileForm::form_closed, this, &MainWindow::save_to_file_form_closed);
     connect(save_to_file_form.get(), &SaveToFileForm::save_to_file, this, &MainWindow::save_to_file_slot);
     save_to_file_form->setWindowFlags(save_to_file_form->windowFlags() & ~Qt::WindowMaximizeButtonHint);
 
     connect(ui->actionOpen_file, &QAction::triggered, this, &MainWindow::on_pushButton_clicked);
+
+    connect(result_form.get(), &result_chart_form::form_closed, this, &MainWindow::showResults_form_closed);
 
     ui->secondsRadioButton->setChecked(true);
 
@@ -68,17 +104,12 @@ MainWindow::MainWindow(QWidget *parent)
     chart_set = new ChartSet(ui);  
 
     QObject::connect(this, &MainWindow::currentMeasureChangedInTable, this, &MainWindow::handleCurrentMeasureChangedInTable);
-
-    QLabel *label = this->findChild<QLabel*>("coord_label");
-    if (label)
-        this->coord_label = label;
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
     delete chart_set;
-    delete coord_label;
 }
 
 
@@ -239,7 +270,7 @@ void ChartSet::show_plots(ChartData& chart_data)
     int i = 0;
     for (auto& series : chart_data.qline_series_array)
     {
-        series.setPen(QPen(colors[i % colors.size()], 0.5f));
+        series.setPen(QPen(colors[i % colors.size()], 0.7f));
         series.setName(QString::number(i + 1));
         i++;
     }
@@ -349,25 +380,20 @@ void InteractiveChartView::mousePressEvent(QMouseEvent *event)
 
 void MainWindow::on_add_current_data_pushButton_clicked()
 {
-    add_current_data();
-}
-
-
-DataListContainer::DataListContainer()
-{
-    auto limit = std::numeric_limits<double>::infinity();
-    validator = new QDoubleValidator(-limit, limit, 2);
-    validator->setNotation(QDoubleValidator::Notation::StandardNotation);  
+    add_current_data();   
 }
 
 void DataListContainer::addPoint(QPointF point, double time, ExperimentPoint::TimeMeasurement measure, QComboBox* comboBox)
 {
     point_list.append(ExperimentPoint(point, DataListContainer::convert_to_seconds(time, measure), measure));
 
+    for (int i = 1; i < experiment_names.size(); i++)
+    {
+        point_list[point_list.size() - 1].points.emplaceBack(1E+16, 1E+16);
+    }
+
     is_inserting = true;
     table_widget->insertRow(table_widget->rowCount());    
-
-    //QString time_measure_as_QString = DataListContainer::timeMeasurement_toQString(measure);
 
     QTableWidgetItem *t = new QTableWidgetItem();
     t->setData(2, time);
@@ -380,11 +406,12 @@ void DataListContainer::addPoint(QPointF point, double time, ExperimentPoint::Ti
     table_widget->setCellWidget(table_widget->rowCount() - 1, 1, comboBox);
 
     QTableWidgetItem *x = new QTableWidgetItem();
-    x->setData(2, point.x());
+    x->setData(2, point.x());    
     table_widget->setItem(table_widget->rowCount() - 1, 2, x);
 
     QTableWidgetItem *y = new QTableWidgetItem();
     y->setData(2, point.y());
+    y->setBackground(Y_colomn_color);
     table_widget->setItem(table_widget->rowCount() - 1, 3, y);
     is_inserting = false;
 }
@@ -394,20 +421,29 @@ void DataListContainer::deletePoint(int row)
     if (row >= 0 and row < point_list.size())
     {
         table_widget->removeRow(row);
+        norm_table_widget->removeRow(row);
         point_list.removeAt(row);
     }
 }
 
-void DataListContainer::updatePoint_in_list(int row)
+void DataListContainer::updatePoint_in_list(int row, bool use_normalization)
 {
     if (not is_inserting)
-    {
-        auto it = point_list.begin();
-        for (int i = 0; i < row; ++i)
-            ++it;
-
-        it->point = QPointF(table_widget->item(row, 2)->text().toFloat(), table_widget->item(row, 3)->text().toFloat());
-        it->seconds = table_widget->item(row, 0)->text().toFloat();
+    {       
+        point_list[row].seconds = table_widget->item(row, 0)->text().toFloat();
+        int numColumns = table_widget->columnCount();
+        for (int i = 2; i < numColumns; i += 2)
+        {
+            QTableWidgetItem* item_x = table_widget->item(row, i);
+            QTableWidgetItem* item_y = table_widget->item(row, i + 1);
+            if (item_x != nullptr and item_y != nullptr)
+            {
+                if (not use_normalization)
+                    point_list[row].points[(i - 2) / 2] = QPointF(item_x->text().toFloat(), item_y->text().toFloat());
+                else
+                    point_list[row].points[(i - 2) / 2] = QPointF(item_x->text().toFloat(), item_y->text().toFloat() * norm_table_widget->item(row, 0)->text().toDouble());
+            }
+        }
     }
 }
 
@@ -421,6 +457,127 @@ void DataListContainer::updateMeasure_in_list(int row, ExperimentPoint::TimeMeas
         it->seconds = convert_to_seconds(convert_to_measure(it->seconds, it->measure), measure);
         it->measure = measure;
     }
+}
+
+void DataListContainer::addExperiment_point(int row, int colomn, QPointF point, bool normalize)
+{
+    //qDebug() << point_list.size()  << '\n';
+    //qDebug() << point_list[row].points.size() << '\n';
+    point_list[row].points[colomn / 2 - 1] = point;
+    is_inserting = true;
+
+    QTableWidgetItem *x = new QTableWidgetItem();
+    x->setData(2, point.x());
+    table_widget->setItem(row, colomn, x);
+    table_widget->setColumnHidden(colomn, not show_x);
+
+    double value = point.y();
+    QTableWidgetItem *y = new QTableWidgetItem();
+    if (normalize)
+        value /= point_list[row].normalization_value;
+    y->setData(2, value);
+    y->setBackground(Y_colomn_color);
+    table_widget->setItem(row, colomn + 1, y);
+
+    is_inserting = false;
+}
+
+void DataListContainer::addExperiment_name(QString name)
+{
+     experiment_names.append(name);
+     for (auto& time_point : point_list)
+         time_point.points.emplaceBack(1E+16, 1E+16);
+}
+
+void DataListContainer::changeNormalization_value(int row, double value, bool use_normalization)
+{
+    if (not is_inserting)
+    {
+        point_list[row].normalization_value = value;
+        point_list[row].changed_normalize = true;
+        norm_table_widget->item(row, 0)->setData(2, value);
+        normalize_row_in_table_widget(row, use_normalization);
+    }
+}
+
+void DataListContainer::changeExperiment_name(QString name, int index)
+{
+    experiment_names[index] = name;
+}
+
+void DataListContainer::removeExperiment_name(int index)
+{
+    experiment_names.removeAt(index);
+    for (auto& point : point_list)
+    {
+        if (point.points.size() - 1 >= index)
+            point.points.removeAt(index);
+    }
+}
+
+void DataListContainer::normalize_row_in_table_widget(int row, bool normalize)
+{
+    is_inserting = true;
+    double norm_value = point_list[row].normalization_value;
+    for (int j = 3; j < table_widget->columnCount(); j += 2)
+    {
+        if (table_widget->item(row, j) == nullptr)
+            continue;
+        double y_value = point_list[row].points[j / 2 - 1].y();
+        if (y_value > 1E+15)
+            continue;
+        if (normalize)
+            y_value /= norm_value;
+        table_widget->item(row, j)->setData(2, y_value);
+    }
+    is_inserting = false;
+}
+
+void DataListContainer::set_show_x(bool is_show)
+{
+    show_x = is_show;
+    int numColumns = table_widget->columnCount();
+    for (int i = 2; i < numColumns; i += 2)
+        table_widget->setColumnHidden(i, !is_show);
+}
+
+bool DataListContainer::select_cell_to_add_exp_point()
+{
+    if (not auto_cell_switch)
+        return true;
+
+    for (int i = 0; i < table_widget->rowCount(); ++i)
+        for (int j = 2; j < table_widget->columnCount(); j += 2)
+            if (table_widget->item(i, j) == nullptr or
+                    table_widget->item(i, j)->text().isEmpty())
+            {
+                table_widget->setCurrentCell(i, j + 1);
+                return true;
+            }
+    return false;
+}
+
+bool DataListContainer::select_cell_to_add_norm_value()
+{
+    if (not auto_cell_switch)
+        return true;
+
+    int i = 0;
+    for (const auto& point : point_list)
+    {
+        if (not point.changed_normalize)
+        {
+            norm_table_widget->setCurrentCell(i, 0);
+            return true;
+        }
+        i++;
+    }
+    return false;
+}
+
+const QList<QString> &DataListContainer::get_experiment_names() const
+{
+    return experiment_names;
 }
 
 const QList<ExperimentPoint>& DataListContainer::getPointList() const
@@ -563,6 +720,7 @@ void MainWindow::action_save_to_file_triggered()
     if (not current_data_table_widget.getPointList().empty())
     {
         this->setEnabled(false);
+        save_to_file_form->load_experiment_names(current_data_table_widget.get_experiment_names());
         save_to_file_form->show();
     }
     else
@@ -634,6 +792,18 @@ void MainWindow::action_change_Y_name_to_absorbtion()
     }
 }
 
+void MainWindow::action_auto_cell_switch_check_box_state_changed(bool checked)
+{
+    current_data_table_widget.auto_cell_switch = checked;
+    if (checked)
+    {
+        if (ui->add_exp_point_radioButton->isChecked())
+            current_data_table_widget.select_cell_to_add_exp_point();
+        else if (ui->add_norm_value_radioButton->isChecked())
+            current_data_table_widget.select_cell_to_add_norm_value();
+    }
+}
+
 void MainWindow::change_chart_setting_form_closed(std::pair<bool, AxesRange> result)
 {
     this->setEnabled(true);
@@ -678,31 +848,83 @@ void MainWindow::save_to_file_slot(const SaveSettings& settings)
             {
             protected:
                 wchar_t do_decimal_point() const override { return L','; } // use comma as decimal separator
-                std::string do_grouping() const override { return "\0"; } // remove thousands separator
+                wchar_t do_thousands_sep() const override { return L'\0'; }
+                std::string do_grouping() const override { return "\3\0"; }// remove thousands separator
+                //std::wstring do_thousands_sep() const override {return ""};
             };
 
             std::locale russian("ru_RU.utf8");
             file.imbue(std::locale(russian, new my_numpunct));
         }
+        file << std::fixed << std::setprecision(3);
         char separator = '\t';
-        //if (QFileInfo(saveFilePath).suffix() == "csv")
-         //   separator = ',';
-
+        const QList<QString>& experiment_names = current_data_table_widget.get_experiment_names();
         const QList<ExperimentPoint>& point_list = current_data_table_widget.getPointList();
-        for (const auto& point : point_list)
+
+        if (settings.save_column_titles)
+        {
+            if (settings.time)
+            {
+                std::wstring time_str = L"time";
+                if (settings.time_measurement != 4)
+                    time_str += L", " + DataListContainer::timeMeasurement_toQString(static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)).toStdWString();
+                file << time_str << separator;
+            }
+            for (int i = 0; i < experiment_names.size(); i++)
+            {
+                if (settings.experiments.contains(i))
+                {
+                    if (settings.x)
+                        file << L"x" + std::to_wstring(i + 1) << separator;
+                    if (settings.y)
+                        file << experiment_names[i].toStdWString() << separator;
+                }
+            }
+            if (settings.save_norm_column)
+                file << L"norm." << separator;
+            file << L'\n';
+        }
+
+        for (const auto& time_point : point_list)
         {
             if (settings.time)
             {
                 if (settings.time_measurement == 4)
-                    file << DataListContainer::convert_to_measure(point.seconds, point.measure) << ' ' << DataListContainer::timeMeasurement_toQString(point.measure).toStdWString() << separator;
+                    file << DataListContainer::convert_to_measure(time_point.seconds, time_point.measure) << ' ' << DataListContainer::timeMeasurement_toQString(time_point.measure).toStdWString() << separator;
                 else
-                    file << DataListContainer::convert_to_measure(point.seconds, static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)) << separator;
+                    file << DataListContainer::convert_to_measure(time_point.seconds, static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)) << separator;
             }
-            if (settings.x)
-                 file << point.point.x() << separator;
-            if (settings.y)
-                file << point.point.y() << separator;
-            file << '\n';
+
+            for (int i = 0; i < experiment_names.size(); i++)
+            {
+                if (settings.experiments.contains(i))
+                {
+                    if (settings.x)
+                    {
+                        if (time_point.points[i].x() < 1E+15)
+                            file << time_point.points[i].x() << separator;
+                        else
+                            file << L"-" << separator;
+                    }
+                    if (settings.y)
+                    {
+                        if (time_point.points[i].y() < 1E+15)
+                        {
+                            float y_value = time_point.points[i].y();
+                            if (settings.normalize_y)
+                                y_value /= time_point.normalization_value;
+                            file << y_value << separator;
+
+                        }
+                        else
+                            file << L"-" << separator;
+                    }
+                }
+            }
+            if (settings.save_norm_column)
+                file << time_point.normalization_value << separator;
+
+            file << L'\n';
         }
         file.close();
         save_to_file_form->hide();
@@ -712,26 +934,82 @@ void MainWindow::save_to_file_slot(const SaveSettings& settings)
 
 void MainWindow::add_current_data()
 {
-    auto comboBox = DataListContainer::create_measure_ComboBox();
-    QObject::connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-                     [&](int index) {
+    if (add_mode == AddMode::AddTimePoint)
+    {
+        auto comboBox = DataListContainer::create_measure_ComboBox();
+        QObject::connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                             [&](int index) {
 
-                         emit MainWindow::currentMeasureChangedInTable(index);
-                     });
-    double time = ui->timeNumberDoubleSpinBox->value();
-    current_data_table_widget.addPoint(chart_set->chartView.getXY(), time, current_time_measure, comboBox);
+                                 emit MainWindow::currentMeasureChangedInTable(index);
+                             });
+        double time = ui->timeNumberDoubleSpinBox->value();
+        current_data_table_widget.addPoint(chart_set->chartView.getXY(), time, current_time_measure, comboBox);
+
+        current_data_table_widget.is_inserting = true;
+        ui->normalization_tableWidget->insertRow(ui->normalization_tableWidget->rowCount());
+        QTableWidgetItem* norm = new QTableWidgetItem();
+        norm->setData(2, 1.f);
+        norm->setTextAlignment(Qt::AlignCenter);
+        ui->normalization_tableWidget->setItem(ui->normalization_tableWidget->rowCount() - 1, 0, norm);
+        current_data_table_widget.is_inserting = false;
+    }
+    else if (add_mode == AddMode::AddExperimentPoint)
+    {
+        QPointF point = chart_set->chartView.getXY();
+        int row = current_data_table_widget.table_widget->currentRow();
+        int colomn = current_data_table_widget.table_widget->currentColumn();
+        if (colomn > 2)
+            current_data_table_widget.addExperiment_point(row, colomn - (colomn % 2), point, ui->use_normalization_checkBox->isChecked());
+
+        if (not current_data_table_widget.select_cell_to_add_exp_point())
+        {
+            on_add_time_point_radioButton_clicked(true);
+            ui->add_time_point_radioButton->setChecked(true);
+        }
+        current_data_table_widget.table_widget->setFocus();
+    }
+    else if (add_mode == AddMode::AddNormalizationValue)
+    {
+        QPointF point = chart_set->chartView.getXY();
+        int row = ui->normalization_tableWidget->currentRow();
+        if (row >= 0)
+        {
+            if (abs(point.y()) > 1e-6 )
+            {
+                current_data_table_widget.changeNormalization_value(row, point.y(), ui->use_normalization_checkBox->isChecked());
+                current_data_table_widget.select_cell_to_add_norm_value();
+            }
+            else
+            {
+                QMessageBox::warning(this, "Warning", tr("the value must not be zero"));
+            }
+        }
+        current_data_table_widget.norm_table_widget->setFocus();
+    }
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event)
+void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Plus)
         add_current_data();
+    else
+        QWidget::keyPressEvent(event);
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    chart_settings_form->hide();
+    save_to_file_form->hide();
+    experiment_name_change_form->hide();
+    add_new_experiment_form->hide();
+    result_form->hide();
+    QWidget::closeEvent(event);
 }
 
 
 void MainWindow::on_current_table_listWidget_itemChanged(QTableWidgetItem *item)
 {
-    current_data_table_widget.updatePoint_in_list(item->row());
+    current_data_table_widget.updatePoint_in_list(item->row(), ui->use_normalization_checkBox->isChecked());
 }
 
 
@@ -761,7 +1039,15 @@ QString remove_filename_from_path(const QString &path)
 
 void MainWindow::on_showResults_pushButton_clicked()
 {
+    this->setEnabled(false);
+
     result_form->show();
+}
+
+void MainWindow::showResults_form_closed()
+{
+    this->setEnabled(true);
+    result_form->hide();
 }
 
 
@@ -771,6 +1057,7 @@ void MainWindow::on_opend_files_listWidget_currentRowChanged(int currentRow)
     std::advance(data_list_it, currentRow);
     chart_set->show_plots(*data_list_it);
     current_chart_data_index = currentRow;
+    ui->currentFile_label->setText(ui->opend_files_listWidget->currentItem()->text());
 }
 
 void MainWindow::key_plus_pressed_handle_slot()
@@ -781,15 +1068,171 @@ void MainWindow::key_plus_pressed_handle_slot()
 void DoubleSpinBoxContainer::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Plus)
-    {
-        //double_spin_box->grabKeyboard();
         emit key_plus_pressed();
-        qDebug() << "key + pressed" << '\n';
-    }
     else
-    {
         QDoubleSpinBox::keyPressEvent(event);
+}
+
+
+void ExperimentPoint::append_experiment_value(QPointF point)
+{
+    points.append(point);
+}
+
+void ExperimentPoint::change_experiment_value(QPointF point, int index)
+{
+    points[index] = point;
+}
+
+void MainWindow::on_show_x_checkBox_stateChanged(int arg1)
+{
+    this->current_data_table_widget.set_show_x(arg1);
+}
+
+
+void MainWindow::on_change_experiment_name_pushButton_clicked()
+{
+    int current_colomn = this->current_data_table_widget.table_widget->currentColumn();
+    if (current_colomn > 1)
+    {
+        int colomn = (current_colomn / 2)  * 2 + 1;
+        experiment_name_change_form->set_current_name(this->current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->text());
+        experiment_name_change_form->set_colomn(colomn);
+        experiment_name_change_form->show();
+        experiment_name_change_form->set_focus_line_edit_2();
+        this->setEnabled(false);
     }
 }
 
+
+void MainWindow::on_add_new_experiment_pushButton_clicked()
+{
+    add_new_experiment_form->show();
+    add_new_experiment_form->set_focus_line_edit();
+    add_new_experiment_form->clear_line_edit();
+    this->setEnabled(false);
+}
+
+void MainWindow::change_experiment_name_form_closed(const QString& new_name)
+{
+    this->setEnabled(true);
+    if (new_name != "")
+    {
+        int colomn = experiment_name_change_form->get_colomn();
+        current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->setText(new_name);
+        current_data_table_widget.changeExperiment_name(new_name, colomn / 2 - 1);
+    }
+}
+
+void MainWindow::add_new_experiment_form_closed(const QString &new_name)
+{
+    this->setEnabled(true);
+    if (new_name != "")
+    {
+        current_data_table_widget.addExperiment_name(new_name);
+
+        current_data_table_widget.table_widget->insertColumn(current_data_table_widget.table_widget->columnCount());
+        int x_count = current_data_table_widget.get_experiment_names().size();
+        current_data_table_widget.table_widget->setHorizontalHeaderItem(current_data_table_widget.table_widget->columnCount() - 1, new QTableWidgetItem("x" + QString::number(x_count)));
+        current_data_table_widget.table_widget->setColumnHidden(current_data_table_widget.table_widget->columnCount() - 1, not ui->show_x_checkBox->isChecked());
+        current_data_table_widget.table_widget->insertColumn(current_data_table_widget.table_widget->columnCount());
+        QTableWidgetItem* y = new QTableWidgetItem(new_name);
+        y->setBackground(Y_colomn_color);
+        current_data_table_widget.table_widget->setHorizontalHeaderItem(current_data_table_widget.table_widget->columnCount() - 1, y);       
+    }
+}
+
+
+void MainWindow::on_delete_experiment_pushButton_clicked()
+{
+    int current_colomn = this->current_data_table_widget.table_widget->currentColumn();
+    if (current_colomn > 1)
+    {
+        int colomn = (current_colomn / 2)  * 2 + 1;
+        QString colomn_name = current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->text();
+        QMessageBox::StandardButton reply = QMessageBox::question(this, tr("Delete experiment"), tr("Are you sure you want to delete <b>") + colomn_name + tr("</b> experiment?"), QMessageBox::Cancel | QMessageBox::Ok);
+        if (reply == QMessageBox::Ok)
+        {
+            current_data_table_widget.table_widget->removeColumn(colomn);
+            current_data_table_widget.table_widget->removeColumn(colomn - 1);
+            current_data_table_widget.removeExperiment_name(colomn / 2 - 1);
+        }
+    }
+}
+
+
+void MainWindow::on_use_normalization_checkBox_stateChanged(int arg1)
+{
+    for (int i = 0; i < current_data_table_widget.table_widget->rowCount(); ++i)
+        current_data_table_widget.normalize_row_in_table_widget(i, arg1);
+}
+
+
+void MainWindow::on_add_time_point_radioButton_clicked(bool checked)
+{
+    if (checked)
+    {
+        ui->timeMeasureGroupBox->setEnabled(true);
+        double_spin_box_container->setEnabled(true);
+        add_mode = AddMode::AddTimePoint;
+        current_data_table_widget.table_widget->clearSelection();
+    }
+}
+
+
+void MainWindow::on_add_exp_point_radioButton_clicked(bool checked)
+{
+    if (checked)
+    {
+        ui->timeMeasureGroupBox->setEnabled(false);
+        double_spin_box_container->setEnabled(false);
+        add_mode = AddMode::AddExperimentPoint;
+        current_data_table_widget.select_cell_to_add_exp_point();
+        current_data_table_widget.norm_table_widget->clearSelection();
+    }
+}
+
+
+void MainWindow::on_add_norm_value_radioButton_clicked(bool checked)
+{
+    if (checked)
+    {
+        //current_data_table_widget.table_widget->setEnabled(false);
+        //current_data_table_widget.norm_table_widget->setEnabled(true);
+        ui->timeMeasureGroupBox->setEnabled(false);
+        double_spin_box_container->setEnabled(false);
+        add_mode = AddMode::AddNormalizationValue;      
+        current_data_table_widget.select_cell_to_add_norm_value();
+        current_data_table_widget.table_widget->clearSelection();
+    }
+}
+
+
+QWidget *DoubleSpinBoxDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &, const QModelIndex &) const
+{
+        QDoubleSpinBox *editor = new QDoubleSpinBox(parent);
+        editor->setMinimum(-1000000000.0);
+        editor->setMaximum(1000000000.0);
+        editor->setDecimals(2);
+        return editor;
+}
+
+void DoubleSpinBoxDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+        double value = index.model()->data(index, Qt::EditRole).toDouble();
+        QDoubleSpinBox *spinBox = static_cast<QDoubleSpinBox*>(editor);
+        spinBox->setValue(value);
+}
+
+void DoubleSpinBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    QDoubleSpinBox *spinBox = static_cast<QDoubleSpinBox*>(editor);
+    double value = spinBox->value();
+    model->setData(index, value, Qt::EditRole);
+}
+
+void MainWindow::on_normalization_tableWidget_itemChanged(QTableWidgetItem *item)
+{
+    current_data_table_widget.changeNormalization_value(current_data_table_widget.norm_table_widget->currentRow(), item->text().toDouble(), ui->use_normalization_checkBox->isChecked());
+}
 

@@ -27,6 +27,8 @@
 #include <chagechartsettingsform.h>
 #include "savetofileform.h"
 #include "SaveSettings.h"
+#include "experiment_name_form.h"
+#include "addnewexperimentform.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,6 +36,15 @@ QT_END_NAMESPACE
 
 
 //Classes to work with charts
+
+class DoubleSpinBoxDelegate : public QStyledItemDelegate {
+public:
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &, const QModelIndex &) const override;
+
+    void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+};
 
 
 class ChartData
@@ -82,7 +93,7 @@ protected:
 
     void mousePressEvent(QMouseEvent *event) override;
 
-private slots:
+private slots:   
 
 };
 
@@ -101,8 +112,6 @@ public:
     QSharedPointer<QValueAxis> current_axis_Y;
 };
 
-
-
 class ExperimentPoint
 {
 public:
@@ -118,14 +127,20 @@ public:
     ExperimentPoint(float x, float y, double seconds, TimeMeasurement measure) :
         seconds(seconds), measure(measure)
     {
-        point = {x, y};
+        points.append({x, y});
     }
     ExperimentPoint(QPointF point, double seconds, TimeMeasurement measure) :
-        point(point), seconds(seconds), measure(measure)
-    {   }
+        seconds(seconds), measure(measure)
+    {
+        points.append(point);
+    }
+    void append_experiment_value(QPointF point);
+    void change_experiment_value(QPointF point, int index);
 
-    QPointF point;
+    QList<QPointF> points;
     double seconds;
+    double normalization_value = 1;
+    bool changed_normalize = false;
     TimeMeasurement measure = t_seconds;
 };
 
@@ -133,32 +148,41 @@ public:
 class DataListContainer
 {
 public:
-    DataListContainer();
+    DataListContainer() = default;
 
     QTableWidget* table_widget = nullptr;
-    QDoubleValidator* validator = nullptr;
+    QTableWidget* norm_table_widget = nullptr;
     bool is_inserting = false;
+    bool auto_cell_switch = true;
 
     void addPoint(QPointF point, double time, ExperimentPoint::TimeMeasurement measure, QComboBox* comboBox);
     void deletePoint(int row);
-    void updatePoint_in_list(int row);
+    void updatePoint_in_list(int row, bool use_normalization);
     void updateMeasure_in_list(int row, ExperimentPoint::TimeMeasurement measure);
+    void addExperiment_point(int row, int colomn, QPointF point, bool normalize);
+    void addExperiment_name(QString name);
+    void changeNormalization_value(int row, double value, bool use_normalization);
+    void changeExperiment_name(QString name, int index);
+    void removeExperiment_name(int index);
+    void normalize_row_in_table_widget(int row, bool noramlize);
+    void set_show_x(bool is_show);
+    bool select_cell_to_add_exp_point();
+    bool select_cell_to_add_norm_value();
+
+    const QList<QString>& get_experiment_names() const;
     const QList<ExperimentPoint>& getPointList() const;
+
     static QComboBox* create_measure_ComboBox();
     static double convert_to_measure(double seconds, ExperimentPoint::TimeMeasurement measure);
     static QString timeMeasurement_toQString(ExperimentPoint::TimeMeasurement measure);
 
-    ~DataListContainer()
-    {
-        delete validator;        
-    }
-
-protected:
-
+protected:    
     static double convert_to_seconds(double time, ExperimentPoint::TimeMeasurement measure);   
     static ExperimentPoint::TimeMeasurement qString_to_timeMeasurement(const QString& measure);
 
-    QList<ExperimentPoint> point_list;
+    bool show_x = true;
+    QList<QString> experiment_names;
+    QVector<ExperimentPoint> point_list;
 };
 
 
@@ -168,9 +192,9 @@ class DoubleSpinBoxContainer : public QDoubleSpinBox
 public:
     DoubleSpinBoxContainer(QWidget *parent = nullptr) : QDoubleSpinBox(parent)
     {    }
+
 signals:
     void key_plus_pressed();
-
 protected:
     QDoubleSpinBox* double_spin_box;
     void keyPressEvent(QKeyEvent *event) override;
@@ -189,8 +213,12 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-public slots:
-
+    enum AddMode
+    {
+        AddTimePoint,
+        AddExperimentPoint,
+        AddNormalizationValue
+    };
 
 private slots:
     void on_pushButton_clicked();
@@ -204,6 +232,7 @@ private slots:
     void on_current_table_listWidget_itemChanged(QTableWidgetItem *item);
     void on_delete_line_from_current_list_pushButton_clicked();
     void on_showResults_pushButton_clicked();
+    void showResults_form_closed();
 
     void handleCurrentMeasureChangedInTable(int index);
     void actionChange_axes_range_triggered();
@@ -211,6 +240,7 @@ private slots:
     void action_change_Y_name_to_amplitude();
     void action_change_Y_name_to_reflection();
     void action_change_Y_name_to_absorbtion();
+    void action_auto_cell_switch_check_box_state_changed(bool checked);
 
     void change_chart_setting_form_closed(std::pair<bool, AxesRange>);
     void save_to_file_form_closed();
@@ -219,25 +249,42 @@ private slots:
     void on_opend_files_listWidget_currentRowChanged(int currentRow);
     void key_plus_pressed_handle_slot();
 
+    void on_show_x_checkBox_stateChanged(int arg1);
+    void on_change_experiment_name_pushButton_clicked();
+    void on_add_new_experiment_pushButton_clicked();
+    void change_experiment_name_form_closed(const QString& new_name);
+    void add_new_experiment_form_closed(const QString& new_name);
+    void on_delete_experiment_pushButton_clicked();
+    void on_use_normalization_checkBox_stateChanged(int arg1);
+    void on_add_time_point_radioButton_clicked(bool checked);
+    void on_add_exp_point_radioButton_clicked(bool checked);
+    void on_add_norm_value_radioButton_clicked(bool checked);
+
+    void on_normalization_tableWidget_itemChanged(QTableWidgetItem *item);
+
 private:
+    Ui::MainWindow *ui;
     ChartSet* chart_set;
     DataListContainer current_data_table_widget;
     std::unique_ptr<DoubleSpinBoxContainer> double_spin_box_container = nullptr;
 
-    QSharedPointer<result_chart_form> result_form;
+    AddMode add_mode = AddMode::AddTimePoint;
 
     std::list<ChartData> chart_data_list;
     size_t current_chart_data_index = 0;
 
     void add_current_data();
-    ExperimentPoint::TimeMeasurement current_time_measure = ExperimentPoint::TimeMeasurement::t_seconds;
-    Ui::MainWindow *ui;
-    QLabel* coord_label;
-    std::shared_ptr<chageChartSettingsForm> chart_settings_form;
-    std::shared_ptr<SaveToFileForm> save_to_file_form;
+    ExperimentPoint::TimeMeasurement current_time_measure = ExperimentPoint::TimeMeasurement::t_seconds;    
+
+    std::unique_ptr<result_chart_form> result_form;
+    std::unique_ptr<chageChartSettingsForm> chart_settings_form;
+    std::unique_ptr<SaveToFileForm> save_to_file_form;
+    std::unique_ptr<Experiment_Name_Form> experiment_name_change_form = nullptr;
+    std::unique_ptr<AddNewExperimentForm> add_new_experiment_form = nullptr;
 
     QString prev_filepath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     void keyPressEvent(QKeyEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
 };
 
 float convert_string_comma_to_float(const std::wstring& num);

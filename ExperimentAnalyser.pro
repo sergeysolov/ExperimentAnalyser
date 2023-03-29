@@ -11,7 +11,9 @@ CONFIG += c++20
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    addnewexperimentform.cpp \
     chagechartsettingsform.cpp \
+    experiment_name_form.cpp \
     main.cpp \
     mainwindow.cpp \
     result_chart_form.cpp \
@@ -20,16 +22,22 @@ SOURCES += \
 HEADERS += \
     AxesRange.h \
     SaveSettings.h \
+    addnewexperimentform.h \
     chagechartsettingsform.h \
+    experiment_name_form.h \
     mainwindow.h \
     result_chart_form.h \
     savetofileform.h
 
 FORMS += \
+    addnewexperimentform.ui \
     chagechartsettingsform.ui \
+    experiment_name_form.ui \
     mainwindow.ui \
     result_chart_form.ui \
     savetofileform.ui
+
+RESOURCES += icons.qrc
 
 TRANSLATIONS += \
     ExperimentAnalyser_ru_RU.ts

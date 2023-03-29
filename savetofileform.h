@@ -15,6 +15,7 @@ class SaveToFileForm : public QWidget
 public:
     explicit SaveToFileForm(QWidget *parent = nullptr);
     ~SaveToFileForm();
+    void load_experiment_names(const QList<QString>& names);
 
 private:
     Ui::SaveToFileForm *ui;
@@ -25,13 +26,15 @@ signals:
     void save_to_file(SaveSettings settings);
 
 private slots:
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
     void on_save_pushButton_clicked();
     void on_calncel_pushButton_clicked();
 
     void on_time_checkBox_stateChanged(int arg1);
     void on_comma_radioButton_clicked();
     void on_dot_radioButton_clicked();
+    void on_y_checkBox_stateChanged(int arg1);
+    void on_x_checkBox_stateChanged(int arg1);
 };
 
 #endif // SAVETOFILEFORM_H
