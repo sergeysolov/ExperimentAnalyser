@@ -25,6 +25,8 @@ private slots:
     void closeEvent(QCloseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
+    void on_clear_pushButton_clicked();
+
 private:
     Ui::AddNewExperimentForm *ui;
 };

@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <sstream>
 #include <QDebug>
+#include <codecvt>
 
 AxesRange current_range;
 
@@ -101,15 +102,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->currentFile_const_label->hide();
 
-    chart_set = new ChartSet(ui);  
-
+    chart_set = new ChartSet(ui, ui->lines_on_chart_listWidget, &chart_data_list, &current_chart_data_index);
+    ui->showResults_pushButton->hide();
     QObject::connect(this, &MainWindow::currentMeasureChangedInTable, this, &MainWindow::handleCurrentMeasureChangedInTable);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete chart_set;
+    //delete chart_set;
 }
 
 
@@ -190,11 +191,15 @@ void MainWindow::on_pushButton_clicked()
     file.close();
 }
 
-ChartSet::ChartSet(Ui::MainWindow* ui)
+ChartSet::ChartSet(Ui::MainWindow* ui, QListWidget* lines_list_widget, std::list<ChartData>* chart_data_list, const size_t* current_chart_data_index)
+    : lines_list_widget(lines_list_widget), chart_data_list(chart_data_list), current_chart_data_index(current_chart_data_index)
 {
     chart.setParent(ui->horizontalFrame);
     chart.setAnimationOptions(QChart::AllAnimations);
     chart.legend()->setVisible(true);
+    auto font = chart.legend()->font();
+    font.setPointSize(12);
+    chart.legend()->setFont(font);
     chart.setTheme(QChart::ChartTheme::ChartThemeLight);
 
     chartView.setUI(ui);
@@ -260,23 +265,49 @@ std::pair<QValueAxis *, QValueAxis *> ChartSet::createQValueAxes(AxesRange fit_t
 }
 
 
-void ChartSet::show_plots(ChartData& chart_data)
-{
-    chart.setAnimationOptions(QChart::AllAnimations);
+void ChartSet::show_plots(ChartData& chart_data, QChart::AnimationOption option, bool rebuild_lines_list_widget)
+{   
+    chart.setAnimationOptions(option);
     QList<QAbstractSeries*> all_series = chart.series();
     for (QAbstractSeries* series : all_series)
         chart.removeSeries(series);
 
+    if (rebuild_lines_list_widget)
+        lines_list_widget->clear();
     int i = 0;
-    for (auto& series : chart_data.qline_series_array)
+    for (auto series = chart_data.qline_series_array.rbegin(); series != chart_data.qline_series_array.rend(); ++series)
     {
-        series.setPen(QPen(colors[i % colors.size()], 0.7f));
-        series.setName(QString::number(i + 1));
+        series->setPen(QPen(colors[i % colors.size()], 0.7f));
+        series->setName(QString::number(i + 1));
+
+        if (rebuild_lines_list_widget)
+        {
+            QListWidgetItem* list_item = new QListWidgetItem();
+            lines_list_widget->addItem(list_item);
+            QCheckBox* list_check_box = new QCheckBox();
+            list_check_box->setText(QString::number(i + 1));
+            list_check_box->setChecked(chart_data.lines_enabled_array[(chart_data.lines_enabled_array.size() - 1) - i]);
+            connect(list_check_box, &QCheckBox::stateChanged, this, &ChartSet::check_box_in_lines_widget_list_state_changed);
+            lines_list_widget->setItemWidget(list_item, list_check_box);
+        }
+        else
+        {
+            QListWidgetItem* item = lines_list_widget->item(i);
+
+            QCheckBox* check_box = qobject_cast<QCheckBox*> (lines_list_widget->itemWidget(item));
+            int index = (chart_data.lines_enabled_array.size() - 1) - i;
+            bool value = chart_data.lines_enabled_array[index];
+            check_box->blockSignals(true);
+            if (check_box != nullptr)
+                check_box->setChecked(value);
+            check_box->blockSignals(false);
+        }
         i++;
     }
 
-    for (auto& series : chart_data.qline_series_array)
-        chart.addSeries(&series);
+    for (int i = static_cast<int> (chart_data.qline_series_array.size()) - 1; i >= 0; i--)
+        if(chart_data.lines_enabled_array[i])
+            chart.addSeries(&chart_data.qline_series_array[i]);
 
     if (chart_data.axis_X == nullptr or chart_data.axis_Y == nullptr)
         chart.createDefaultAxes();
@@ -295,15 +326,84 @@ void ChartSet::show_plots(ChartData& chart_data)
         current_axis_X = chart_data.axis_X;
         current_axis_Y = chart_data.axis_Y;
 
+        int i = 0;
         for (auto& series : chart_data.qline_series_array)
         {
-            series.attachAxis(chart_data.axis_X.get());
-            series.attachAxis(chart_data.axis_Y.get());
+            if (chart_data.lines_enabled_array[i])
+            {
+                series.attachAxis(chart_data.axis_X.get());
+                series.attachAxis(chart_data.axis_Y.get());
+            }
+            i++;
         }
     }
+    chartView.setRenderHint(QPainter::Antialiasing);    
+}
 
-    chartView.setRenderHint(QPainter::Antialiasing);
-    chartView.show();
+void ChartSet::next_line()
+{
+    auto current_lines = chart_data_list->begin();
+    std::advance(current_lines, *current_chart_data_index);
+
+    if (current_lines->current_line < 1)
+        current_lines->current_line = static_cast<int> (current_lines->qline_series_array.size()) - 1;
+    else
+        current_lines->current_line--;
+
+    for (int i = static_cast<int> (current_lines->lines_enabled_array.size()) - 1; i >= 0 ; i--)
+        current_lines->lines_enabled_array[i] = (i == current_lines->current_line ? true : false);
+
+    show_plots(*current_lines, QChart::NoAnimation, false);
+
+    lines_list_widget->scrollToItem(lines_list_widget->item(lines_list_widget->count() - 1 - current_lines->current_line));
+}
+
+void ChartSet::prev_line()
+{
+    auto current_lines = chart_data_list->begin();
+    std::advance(current_lines, *current_chart_data_index);
+
+    if (current_lines->current_line >=  current_lines->qline_series_array.size() - 1)
+        current_lines->current_line = 0;
+    else
+        current_lines->current_line++;
+
+    for (int i = static_cast<int> (current_lines->lines_enabled_array.size()) - 1; i >= 0 ; i--)
+        current_lines->lines_enabled_array[i] = (i == current_lines->current_line ? true : false);
+
+    show_plots(*current_lines, QChart::NoAnimation, false);
+
+    lines_list_widget->scrollToItem(lines_list_widget->item(lines_list_widget->count() - 1 - current_lines->current_line));
+}
+
+void ChartSet::turn_on_all_lines()
+{
+    auto current_lines = chart_data_list->begin();
+    std::advance(current_lines, *current_chart_data_index);
+
+    for (int i = static_cast<int> (current_lines->lines_enabled_array.size()) - 1; i >= 0 ; i--)
+        current_lines->lines_enabled_array[i] = true;
+
+    show_plots(*current_lines, QChart::NoAnimation);
+}
+
+void ChartSet::check_box_in_lines_widget_list_state_changed(int state)
+{
+    int index = (lines_list_widget->count() - 1) - lines_list_widget->currentRow();
+    auto current_lines = chart_data_list->begin();
+    std::advance(current_lines, *current_chart_data_index);
+    current_lines->lines_enabled_array[index] = state;
+    chart.setAnimationOptions(QChart::NoAnimation);
+    if (state)
+    {
+        chart.addSeries(&current_lines->qline_series_array[index]);
+        current_lines->qline_series_array[index].attachAxis(current_axis_X.get());
+        current_lines->qline_series_array[index].attachAxis(current_axis_Y.get());
+
+    }
+    else
+        chart.removeSeries(&current_lines->qline_series_array[index]);
+    show_plots(*current_lines, QChart::NoAnimation, false);
 }
 
 
@@ -380,7 +480,7 @@ void InteractiveChartView::mousePressEvent(QMouseEvent *event)
 
 void MainWindow::on_add_current_data_pushButton_clicked()
 {
-    add_current_data();   
+    add_current_data();
 }
 
 void DataListContainer::addPoint(QPointF point, double time, ExperimentPoint::TimeMeasurement measure, QComboBox* comboBox)
@@ -831,105 +931,210 @@ void MainWindow::save_to_file_form_closed()
 void MainWindow::save_to_file_slot(const SaveSettings& settings)
 {
     QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-    QString saveFilePath = QFileDialog::getSaveFileName(
-        nullptr,
-        "Save File",
-        defaultDir,
-        "CSV Files (*.csv);;Text Files (*.txt)"
-    );
+        QString saveFilePath = QFileDialog::getSaveFileName(
+            nullptr,
+            "Save File",
+            defaultDir,
+            "Excel Files (*.xlsx);;CSV Files (*.csv);;Text Files (*.txt)"
+        );
 
-    if (not saveFilePath.isEmpty())
-    {
-        std::wofstream file(saveFilePath.toStdWString());
-
-        if (settings.comma == true)
+        if (not saveFilePath.isEmpty())
         {
-            struct my_numpunct : std::numpunct<wchar_t>
+            if (QFileInfo(saveFilePath).suffix() == "xlsx")
             {
-            protected:
-                wchar_t do_decimal_point() const override { return L','; } // use comma as decimal separator
-                wchar_t do_thousands_sep() const override { return L'\0'; }
-                std::string do_grouping() const override { return "\3\0"; }// remove thousands separator
-                //std::wstring do_thousands_sep() const override {return ""};
-            };
+                //saveFilePath.toStdString()
+                OpenXLSX::XLDocument doc;
 
-            std::locale russian("ru_RU.utf8");
-            file.imbue(std::locale(russian, new my_numpunct));
-        }
-        file << std::fixed << std::setprecision(3);
-        char separator = '\t';
-        const QList<QString>& experiment_names = current_data_table_widget.get_experiment_names();
-        const QList<ExperimentPoint>& point_list = current_data_table_widget.getPointList();
+                doc.create(saveFilePath.toStdString());
+                auto worksheet = doc.workbook().worksheet("Sheet1");
 
-        if (settings.save_column_titles)
-        {
-            if (settings.time)
-            {
-                std::wstring time_str = L"time";
-                if (settings.time_measurement != 4)
-                    time_str += L", " + DataListContainer::timeMeasurement_toQString(static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)).toStdWString();
-                file << time_str << separator;
-            }
-            for (int i = 0; i < experiment_names.size(); i++)
-            {
-                if (settings.experiments.contains(i))
+                //start saving
+                const QList<QString>& experiment_names = current_data_table_widget.get_experiment_names();
+                const QList<ExperimentPoint>& point_list = current_data_table_widget.getPointList();
+                //save column titles
+                int i_excel = 1, j_excel = 1;
+                if (settings.save_column_titles)
                 {
-                    if (settings.x)
-                        file << L"x" + std::to_wstring(i + 1) << separator;
-                    if (settings.y)
-                        file << experiment_names[i].toStdWString() << separator;
-                }
-            }
-            if (settings.save_norm_column)
-                file << L"norm." << separator;
-            file << L'\n';
-        }
-
-        for (const auto& time_point : point_list)
-        {
-            if (settings.time)
-            {
-                if (settings.time_measurement == 4)
-                    file << DataListContainer::convert_to_measure(time_point.seconds, time_point.measure) << ' ' << DataListContainer::timeMeasurement_toQString(time_point.measure).toStdWString() << separator;
-                else
-                    file << DataListContainer::convert_to_measure(time_point.seconds, static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)) << separator;
-            }
-
-            for (int i = 0; i < experiment_names.size(); i++)
-            {
-                if (settings.experiments.contains(i))
-                {
-                    if (settings.x)
+                    if (settings.time)
                     {
-                        if (time_point.points[i].x() < 1E+15)
-                            file << time_point.points[i].x() << separator;
-                        else
-                            file << L"-" << separator;
+                        std::string time_str = "time";
+                        if (settings.time_measurement != 4)
+                            time_str += ", " + DataListContainer::timeMeasurement_toQString(static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)).toStdString();
+                        worksheet.cell(1, 1).value() = time_str;
+                        j_excel++;
                     }
-                    if (settings.y)
+
+                    for (int i = 0; i < experiment_names.size(); i++)
                     {
-                        if (time_point.points[i].y() < 1E+15)
+                        if (settings.experiments.contains(i))
                         {
-                            float y_value = time_point.points[i].y();
-                            if (settings.normalize_y)
-                                y_value /= time_point.normalization_value;
-                            file << y_value << separator;
-
+                            if (settings.x)
+                            {
+                                worksheet.cell(i_excel, j_excel).value() = "x" + std::to_string(i + 1);
+                                j_excel++;
+                            }
+                            if (settings.y)
+                            {
+                                worksheet.cell(i_excel, j_excel).value() = experiment_names[i].toStdString();
+                                j_excel++;
+                            }
                         }
-                        else
-                            file << L"-" << separator;
                     }
+                    if (settings.save_norm_column)
+                        worksheet.cell(i_excel, j_excel).value() = "norm.";
+                    i_excel++; j_excel = 1;
                 }
-            }
-            if (settings.save_norm_column)
-                file << time_point.normalization_value << separator;
 
-            file << L'\n';
+                //Save points
+                for (const auto& time_point : point_list)
+                {
+                    if (settings.time)
+                    {
+                        if (settings.time_measurement == 4)
+                            worksheet.cell(i_excel, j_excel).value() = std::to_string(DataListContainer::convert_to_measure(time_point.seconds, time_point.measure)) + " " + DataListContainer::timeMeasurement_toQString(time_point.measure).toStdString();
+                        else
+                            worksheet.cell(i_excel, j_excel).value() = DataListContainer::convert_to_measure(time_point.seconds, static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement));
+                        j_excel++;
+                    }
+
+                    for (int i = 0; i < experiment_names.size(); i++)
+                    {
+                        if (settings.experiments.contains(i))
+                        {
+                            if (settings.x)
+                            {
+                                if (time_point.points[i].x() < 1E+15)
+                                    worksheet.cell(i_excel, j_excel).value() = time_point.points[i].x();
+                                else
+                                    worksheet.cell(i_excel, j_excel).value() = "-";
+                                j_excel++;
+                            }
+                            if (settings.y)
+                            {
+                                if (time_point.points[i].y() < 1E+15)
+                                {
+                                    float y_value = time_point.points[i].y();
+                                    if (settings.normalize_y)
+                                        y_value /= time_point.normalization_value;
+                                    worksheet.cell(i_excel, j_excel).value() = y_value;
+
+                                }
+                                else
+                                    worksheet.cell(i_excel, j_excel).value() = "-";
+                                j_excel++;
+                            }
+                        }
+                    }
+                    if (settings.save_norm_column)
+                    {
+                        worksheet.cell(i_excel, j_excel).value() = time_point.normalization_value;
+                        j_excel++;
+                    }
+
+                    i_excel++; j_excel = 1;
+                }
+
+                doc.save();
+                doc.close();
+            }
+            else
+            {
+                std::wofstream file(saveFilePath.toStdWString());
+
+                struct my_numpunct : std::numpunct<wchar_t>
+                {
+                    bool comma = false;
+                protected:
+                    wchar_t do_decimal_point() const override
+                    {
+                        if (comma)
+                            return L','; // use comma as decimal separator
+                        return L'.'; // use dot as decimal separator
+                    }
+                    wchar_t do_thousands_sep() const override { return L'\0'; }
+                    std::string do_grouping() const override { return "\3\0"; }// remove thousands separator
+                };
+
+                my_numpunct* numpunct = new my_numpunct;
+                numpunct->comma = settings.comma;
+                std::locale russian("ru_RU.UTF-8");
+                file.imbue(std::locale(russian, numpunct));
+
+                //file << std::fixed << std::setprecision(3);
+                char separator = '\t';
+                const QList<QString>& experiment_names = current_data_table_widget.get_experiment_names();
+                const QList<ExperimentPoint>& point_list = current_data_table_widget.getPointList();
+
+                if (settings.save_column_titles)
+                {
+                    if (settings.time)
+                    {
+                        std::wstring time_str = L"time";
+                        if (settings.time_measurement != 4)
+                            time_str += L", " + DataListContainer::timeMeasurement_toQString(static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)).toStdWString();
+                        file << time_str << separator;
+                    }
+                    for (int i = 0; i < experiment_names.size(); i++)
+                    {
+                        if (settings.experiments.contains(i))
+                        {
+                            if (settings.x)
+                                file << L"x" + std::to_wstring(i + 1) << separator;
+                            if (settings.y)
+                                file << experiment_names[i].toStdWString() << separator;
+                        }
+                    }
+                    if (settings.save_norm_column)
+                        file << L"norm." << separator;
+                    file << L'\n';
+                }
+
+                for (const auto& time_point : point_list)
+                {
+                    if (settings.time)
+                    {
+                        if (settings.time_measurement == 4)
+                            file << DataListContainer::convert_to_measure(time_point.seconds, time_point.measure) << ' ' << DataListContainer::timeMeasurement_toQString(time_point.measure).toStdWString() << separator;
+                        else
+                            file << DataListContainer::convert_to_measure(time_point.seconds, static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)) << separator;
+                    }
+
+                    for (int i = 0; i < experiment_names.size(); i++)
+                    {
+                        if (settings.experiments.contains(i))
+                        {
+                            if (settings.x)
+                            {
+                                if (time_point.points[i].x() < 1E+15)
+                                    file << time_point.points[i].x() << separator;
+                                else
+                                    file << L"-" << separator;
+                            }
+                            if (settings.y)
+                            {
+                                if (time_point.points[i].y() < 1E+15)
+                                {
+                                    float y_value = time_point.points[i].y();
+                                    if (settings.normalize_y)
+                                        y_value /= time_point.normalization_value;
+                                    file << y_value << separator;
+
+                                }
+                                else
+                                    file << L"-" << separator;
+                            }
+                        }
+                    }
+                    if (settings.save_norm_column)
+                        file << time_point.normalization_value << separator;
+
+                    file << L'\n';
+                }
+                file.close();
+            }
+            this->setEnabled(true);
+            save_to_file_form->hide();
         }
-        file.close();
-        save_to_file_form->hide();
-        this->setEnabled(true);
-    }
 }
 
 void MainWindow::add_current_data()
@@ -948,10 +1153,13 @@ void MainWindow::add_current_data()
         current_data_table_widget.is_inserting = true;
         ui->normalization_tableWidget->insertRow(ui->normalization_tableWidget->rowCount());
         QTableWidgetItem* norm = new QTableWidgetItem();
-        norm->setData(2, 1.f);
+        norm->setData(2, 1.0f);
         norm->setTextAlignment(Qt::AlignCenter);
         ui->normalization_tableWidget->setItem(ui->normalization_tableWidget->rowCount() - 1, 0, norm);
         current_data_table_widget.is_inserting = false;
+
+        auto v_scroll_bar = current_data_table_widget.table_widget->verticalScrollBar();
+        v_scroll_bar->setValue(v_scroll_bar->maximum());
     }
     else if (add_mode == AddMode::AddExperimentPoint)
     {
@@ -992,6 +1200,10 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Plus)
         add_current_data();
+    /*else if (event->key() == Qt::Key_Up)
+        on_previous_line_pushButton_clicked();
+    else if (event->key() == Qt::Key_Down)
+        on_next_line_pushButton_clicked();*/
     else
         QWidget::keyPressEvent(event);
 }
@@ -1092,16 +1304,20 @@ void MainWindow::on_show_x_checkBox_stateChanged(int arg1)
 
 void MainWindow::on_change_experiment_name_pushButton_clicked()
 {
+    if (current_data_table_widget.get_experiment_names().size() == 0)
+        return;
+
     int current_colomn = this->current_data_table_widget.table_widget->currentColumn();
-    if (current_colomn > 1)
-    {
-        int colomn = (current_colomn / 2)  * 2 + 1;
-        experiment_name_change_form->set_current_name(this->current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->text());
-        experiment_name_change_form->set_colomn(colomn);
-        experiment_name_change_form->show();
-        experiment_name_change_form->set_focus_line_edit_2();
-        this->setEnabled(false);
-    }
+    if (current_colomn <= 1)
+        current_colomn = 2;
+
+    int colomn = (current_colomn / 2)  * 2 + 1;
+    experiment_name_change_form->set_current_name(this->current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->text());
+    experiment_name_change_form->set_colomn(colomn);
+    experiment_name_change_form->show();
+    experiment_name_change_form->set_focus_line_edit_2();
+    this->setEnabled(false);
+
 }
 
 
@@ -1145,18 +1361,21 @@ void MainWindow::add_new_experiment_form_closed(const QString &new_name)
 
 void MainWindow::on_delete_experiment_pushButton_clicked()
 {
+    if (current_data_table_widget.get_experiment_names().size() == 0)
+        return;
+
     int current_colomn = this->current_data_table_widget.table_widget->currentColumn();
-    if (current_colomn > 1)
+    if (current_colomn <= 1)
+        current_colomn = 2;
+
+    int colomn = (current_colomn / 2)  * 2 + 1;
+    QString colomn_name = current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->text();
+    QMessageBox::StandardButton reply = QMessageBox::question(this, tr("Delete experiment"), tr("Are you sure you want to delete <b>") + colomn_name + tr("</b> experiment?"), QMessageBox::Cancel | QMessageBox::Ok);
+    if (reply == QMessageBox::Ok)
     {
-        int colomn = (current_colomn / 2)  * 2 + 1;
-        QString colomn_name = current_data_table_widget.table_widget->horizontalHeaderItem(colomn)->text();
-        QMessageBox::StandardButton reply = QMessageBox::question(this, tr("Delete experiment"), tr("Are you sure you want to delete <b>") + colomn_name + tr("</b> experiment?"), QMessageBox::Cancel | QMessageBox::Ok);
-        if (reply == QMessageBox::Ok)
-        {
-            current_data_table_widget.table_widget->removeColumn(colomn);
-            current_data_table_widget.table_widget->removeColumn(colomn - 1);
-            current_data_table_widget.removeExperiment_name(colomn / 2 - 1);
-        }
+        current_data_table_widget.table_widget->removeColumn(colomn);
+        current_data_table_widget.table_widget->removeColumn(colomn - 1);
+        current_data_table_widget.removeExperiment_name(colomn / 2 - 1);
     }
 }
 
@@ -1234,5 +1453,31 @@ void DoubleSpinBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *mo
 void MainWindow::on_normalization_tableWidget_itemChanged(QTableWidgetItem *item)
 {
     current_data_table_widget.changeNormalization_value(current_data_table_widget.norm_table_widget->currentRow(), item->text().toDouble(), ui->use_normalization_checkBox->isChecked());
+}
+
+void MainWindow::on_next_line_pushButton_clicked()
+{
+    if (not chart_data_list.empty())
+    {
+        chart_set->next_line();
+    }
+}
+
+
+void MainWindow::on_previous_line_pushButton_clicked()
+{
+    if (not chart_data_list.empty())
+    {
+        chart_set->prev_line();
+    }
+}
+
+
+void MainWindow::on_turn_on_all_lines_pushButton_clicked()
+{
+    if (not chart_data_list.empty())
+    {
+        chart_set->turn_on_all_lines();
+    }
 }
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>260</width>
-    <height>203</height>
+    <width>321</width>
+    <height>173</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>20</y>
+     <y>10</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -30,8 +30,8 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>50</y>
-     <width>221</width>
+     <y>30</y>
+     <width>289</width>
      <height>28</height>
     </rect>
    </property>
@@ -40,7 +40,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>90</y>
+     <y>70</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -53,8 +53,8 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>120</y>
-     <width>221</width>
+     <y>90</y>
+     <width>261</width>
      <height>28</height>
     </rect>
    </property>
@@ -63,7 +63,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>160</y>
+     <y>130</y>
      <width>167</width>
      <height>29</height>
     </rect>
@@ -72,7 +72,32 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
+  <widget class="QPushButton" name="clear_pushButton">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>90</y>
+     <width>29</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/remove_icon.png</normaloff>:/remove_icon.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>25</width>
+     <height>25</height>
+    </size>
+   </property>
+  </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

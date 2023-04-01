@@ -30,6 +30,8 @@ private slots:
     void closeEvent(QCloseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
+    void on_clear_pushButton_clicked();
+
 private:
     int colomn;
     Ui::Experiment_Name_Form *ui;

@@ -44,6 +44,10 @@ TRANSLATIONS += \
 CONFIG += lrelease
 CONFIG += embed_translations
 
+INCLUDEPATH += "C:/Program Files (x86)/OpenXLSX.Library/include/OpenXLSX"
+LIBS += -L"C:/Program Files (x86)/OpenXLSX.Library/lib" -lOpenXLSX
+LIBS += -L"C:/Program Files (x86)/OpenXLSX.Library/lib" -lOpenXLSXd
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

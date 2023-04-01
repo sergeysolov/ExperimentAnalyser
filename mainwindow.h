@@ -18,6 +18,9 @@
 #include <QVector>
 #include <QSharedPointer>
 
+#include <QTextStream>
+#include <QFile>
+
 #include <QtCharts/QChart>
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QValueAxis>
@@ -30,6 +33,8 @@
 #include "experiment_name_form.h"
 #include "addnewexperimentform.h"
 
+#include <OpenXLSX.hpp>
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -39,6 +44,7 @@ QT_END_NAMESPACE
 
 class DoubleSpinBoxDelegate : public QStyledItemDelegate {
 public:
+
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &, const QModelIndex &) const override;
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const override;
@@ -53,16 +59,20 @@ public:
     ChartData() = default;
     ChartData(std::vector<QLineSeries>&& data, AxesRange ranges, float max_Y_value, QValueAxis* axis_X = nullptr, QValueAxis* axis_Y = nullptr, const QString& title = "") :
         fit_to_line_ranges(ranges), max_Y_value(max_Y_value), qline_series_array(std::move(data)), axis_X(axis_X), axis_Y(axis_Y), title(title)
-    {    };
+    {
+        lines_enabled_array.assign(qline_series_array.size(), true);
+    };
 
     ~ChartData()
     {    }
     AxesRange fit_to_line_ranges;
     float max_Y_value;
     std::vector<QLineSeries> qline_series_array;
+    std::vector<bool> lines_enabled_array;
     QSharedPointer<QValueAxis> axis_X = nullptr;
     QSharedPointer<QValueAxis> axis_Y = nullptr;
     QString title;
+    int current_line = -1;
 };
 
 
@@ -93,23 +103,33 @@ protected:
 
     void mousePressEvent(QMouseEvent *event) override;
 
-private slots:   
-
+private slots:         
 };
 
 
-class ChartSet
+class ChartSet : public QObject
 {
+
+    Q_OBJECT
 public:
-    ChartSet(Ui::MainWindow* ui);
+    ChartSet(Ui::MainWindow* ui, QListWidget* lines_list_widget, std::list<ChartData>* chart_data_list, const size_t* current_chart_data_index);
 
     static std::pair<QValueAxis*, QValueAxis*> createQValueAxes(AxesRange fit_to_line_range, float default_max_Y);
-    void show_plots(ChartData& data);
+    void show_plots(ChartData& data, QChart::AnimationOption option = QChart::AllAnimations, bool rebuild_lines_list_widget = true);
+    void next_line();
+    void prev_line();
+    void turn_on_all_lines();
 
     QChart chart;
     InteractiveChartView chartView;
     QSharedPointer<QValueAxis> current_axis_X;
     QSharedPointer<QValueAxis> current_axis_Y;
+    QListWidget* lines_list_widget;
+    std::list<ChartData>* chart_data_list;
+    const size_t* current_chart_data_index = 0;
+
+public slots:
+    void check_box_in_lines_widget_list_state_changed(int state);
 };
 
 class ExperimentPoint
@@ -262,6 +282,9 @@ private slots:
 
     void on_normalization_tableWidget_itemChanged(QTableWidgetItem *item);
 
+    void on_next_line_pushButton_clicked();
+    void on_previous_line_pushButton_clicked();
+    void on_turn_on_all_lines_pushButton_clicked();
 private:
     Ui::MainWindow *ui;
     ChartSet* chart_set;

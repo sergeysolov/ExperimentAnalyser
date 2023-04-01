@@ -60,3 +60,10 @@ void AddNewExperimentForm::keyPressEvent(QKeyEvent *event)
     else
         QWidget::keyPressEvent(event);
 }
+
+void AddNewExperimentForm::on_clear_pushButton_clicked()
+{
+    ui->lineEdit->clear();
+    ui->lineEdit->setFocus();
+}
+

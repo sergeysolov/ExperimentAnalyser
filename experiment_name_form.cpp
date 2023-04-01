@@ -18,7 +18,7 @@ Experiment_Name_Form::~Experiment_Name_Form()
 void Experiment_Name_Form::set_current_name(const QString &name)
 {
     ui->lineEdit_1->setText(name);
-    ui->lineEdit_2->clear();
+    ui->lineEdit_2->setText(name);
 }
 
 void Experiment_Name_Form::set_colomn(int colomn)
@@ -72,5 +72,12 @@ void Experiment_Name_Form::keyPressEvent(QKeyEvent *event)
     }
     else
         QWidget::keyPressEvent(event);
+}
+
+
+void Experiment_Name_Form::on_clear_pushButton_clicked()
+{
+    ui->lineEdit_2->clear();
+    ui->lineEdit_2->setFocus();
 }
 

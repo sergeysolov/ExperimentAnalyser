@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1427</width>
-    <height>692</height>
+    <width>1517</width>
+    <height>784</height>
    </rect>
   </property>
   <property name="font">
@@ -22,10 +22,10 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>30</y>
+      <x>932</x>
+      <y>18</y>
       <width>92</width>
-      <height>36</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
@@ -43,10 +43,10 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>50</y>
-      <width>761</width>
-      <height>571</height>
+      <x>10</x>
+      <y>0</y>
+      <width>841</width>
+      <height>698</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout"/>
@@ -54,10 +54,10 @@
    <widget class="QTableWidget" name="current_table_listWidget">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>290</y>
-      <width>531</width>
-      <height>331</height>
+      <x>860</x>
+      <y>308</y>
+      <width>541</width>
+      <height>391</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -102,8 +102,8 @@
    <widget class="QGroupBox" name="timeGroupBox">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>170</y>
+      <x>980</x>
+      <y>180</y>
       <width>251</width>
       <height>111</height>
      </rect>
@@ -201,7 +201,7 @@
        <x>10</x>
        <y>70</y>
        <width>51</width>
-       <height>36</height>
+       <height>30</height>
       </rect>
      </property>
      <property name="text">
@@ -214,7 +214,7 @@
        <x>70</x>
        <y>70</y>
        <width>51</width>
-       <height>36</height>
+       <height>30</height>
       </rect>
      </property>
      <property name="text">
@@ -228,10 +228,10 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>0</y>
+      <x>770</x>
+      <y>700</y>
       <width>101</width>
-      <height>31</height>
+      <height>20</height>
      </rect>
     </property>
     <property name="text">
@@ -241,10 +241,10 @@
    <widget class="QLabel" name="currentFile_label">
     <property name="geometry">
      <rect>
-      <x>890</x>
-      <y>0</y>
-      <width>251</width>
-      <height>31</height>
+      <x>870</x>
+      <y>700</y>
+      <width>581</width>
+      <height>20</height>
      </rect>
     </property>
     <property name="text">
@@ -254,9 +254,9 @@
    <widget class="QPushButton" name="showResults_pushButton">
     <property name="geometry">
      <rect>
-      <x>890</x>
+      <x>1230</x>
       <y>30</y>
-      <width>122</width>
+      <width>21</width>
       <height>36</height>
      </rect>
     </property>
@@ -267,10 +267,10 @@
    <widget class="QListWidget" name="opend_files_listWidget">
     <property name="geometry">
      <rect>
-      <x>1140</x>
-      <y>30</y>
-      <width>211</width>
-      <height>251</height>
+      <x>1270</x>
+      <y>20</y>
+      <width>221</width>
+      <height>281</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -280,10 +280,10 @@
    <widget class="QLabel" name="opened_files_const_label">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>1270</x>
       <y>0</y>
       <width>191</width>
-      <height>31</height>
+      <height>20</height>
      </rect>
     </property>
     <property name="text">
@@ -293,8 +293,8 @@
    <widget class="QGroupBox" name="add_options_groupBox">
     <property name="geometry">
      <rect>
-      <x>930</x>
-      <y>70</y>
+      <x>1070</x>
+      <y>60</y>
       <width>181</width>
       <height>101</height>
      </rect>
@@ -319,7 +319,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>60</y>
+       <y>58</y>
        <width>171</width>
        <height>26</height>
       </rect>
@@ -345,7 +345,7 @@
    <widget class="QLabel" name="coord_label">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>1140</x>
       <y>0</y>
       <width>111</width>
       <height>54</height>
@@ -359,8 +359,8 @@ y: -</string>
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>70</y>
+      <x>930</x>
+      <y>60</y>
       <width>131</width>
       <height>101</height>
      </rect>
@@ -467,10 +467,10 @@ y: -</string>
    <widget class="QTableWidget" name="normalization_tableWidget">
     <property name="geometry">
      <rect>
-      <x>1320</x>
-      <y>290</y>
+      <x>1400</x>
+      <y>308</y>
       <width>95</width>
-      <height>331</height>
+      <height>391</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -488,6 +488,101 @@ y: -</string>
      </property>
     </column>
    </widget>
+   <widget class="QListWidget" name="lines_on_chart_listWidget">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>20</y>
+      <width>60</width>
+      <height>281</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lines_const_label">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>0</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Lines:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="next_line_pushButton">
+    <property name="geometry">
+     <rect>
+      <x>923</x>
+      <y>230</y>
+      <width>30</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/arrow_down icon.png</normaloff>:/arrow_down icon.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>22</width>
+      <height>22</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="previous_line_pushButton">
+    <property name="geometry">
+     <rect>
+      <x>923</x>
+      <y>200</y>
+      <width>30</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/arrow_up icon.png</normaloff>:/arrow_up icon.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>22</width>
+      <height>22</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="turn_on_all_lines_pushButton">
+    <property name="geometry">
+     <rect>
+      <x>923</x>
+      <y>270</y>
+      <width>30</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/refresh icon.png</normaloff>:/refresh icon.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>22</width>
+      <height>22</height>
+     </size>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menuBar">
@@ -495,7 +590,7 @@ y: -</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1427</width>
+     <width>1517</width>
      <height>32</height>
     </rect>
    </property>
@@ -558,7 +653,7 @@ y: -</string>
   </action>
   <action name="actionOpen_file">
    <property name="text">
-    <string>Open file</string>
+    <string>Open file (Ocean Optics)</string>
    </property>
   </action>
   <action name="actionAuto_cell_switching">

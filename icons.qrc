@@ -3,5 +3,9 @@
         <file>add icon.png</file>
         <file>change icon.png</file>
         <file>delete icon.png</file>
+        <file>arrow_down icon.png</file>
+        <file>arrow_up icon.png</file>
+        <file>refresh icon.png</file>
+        <file>remove_icon.png</file>
     </qresource>
 </RCC>
