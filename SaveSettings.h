@@ -21,6 +21,8 @@ struct SaveSettings
     bool normalize_y = false;
     bool save_norm_column = false;
     bool save_column_titles = false;
+    bool append_to_excel = false;
+
     std::set<int> experiments;
 };
 

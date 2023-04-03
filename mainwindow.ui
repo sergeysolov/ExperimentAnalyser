@@ -22,7 +22,7 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>932</x>
+      <x>1160</x>
       <y>18</y>
       <width>92</width>
       <height>30</height>
@@ -111,25 +111,6 @@
     <property name="title">
      <string>Time point</string>
     </property>
-    <widget class="QDoubleSpinBox" name="timeNumberDoubleSpinBox">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>40</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="decimals">
-      <number>2</number>
-     </property>
-     <property name="maximum">
-      <double>1000000.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>1.000000000000000</double>
-     </property>
-    </widget>
     <widget class="QGroupBox" name="timeMeasureGroupBox">
      <property name="geometry">
       <rect>
@@ -221,6 +202,25 @@
       <string>Del</string>
      </property>
     </widget>
+    <widget class="QDoubleSpinBox" name="timeNumberDoubleSpinBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>100</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="decimals">
+      <number>2</number>
+     </property>
+     <property name="maximum">
+      <double>1000000000.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
    </widget>
    <widget class="QLabel" name="currentFile_const_label">
     <property name="enabled">
@@ -229,7 +229,7 @@
     <property name="geometry">
      <rect>
       <x>770</x>
-      <y>700</y>
+      <y>698</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -241,8 +241,8 @@
    <widget class="QLabel" name="currentFile_label">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>700</y>
+      <x>865</x>
+      <y>698</y>
       <width>581</width>
       <height>20</height>
      </rect>
@@ -254,8 +254,8 @@
    <widget class="QPushButton" name="showResults_pushButton">
     <property name="geometry">
      <rect>
-      <x>1230</x>
-      <y>30</y>
+      <x>1070</x>
+      <y>20</y>
       <width>21</width>
       <height>36</height>
      </rect>
@@ -269,7 +269,7 @@
      <rect>
       <x>1270</x>
       <y>20</y>
-      <width>221</width>
+      <width>225</width>
       <height>281</height>
      </rect>
     </property>
@@ -345,7 +345,7 @@
    <widget class="QLabel" name="coord_label">
     <property name="geometry">
      <rect>
-      <x>1140</x>
+      <x>930</x>
       <y>0</y>
       <width>111</width>
       <height>54</height>
@@ -622,9 +622,16 @@ y: -</string>
     </property>
     <addaction name="actionAuto_cell_switching"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionConvert_file_Oscilloscope"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuChart"/>
    <addaction name="menuOptions"/>
+   <addaction name="menuTools"/>
   </widget>
   <action name="actionChange_axes_range">
    <property name="text">
@@ -672,6 +679,16 @@ y: -</string>
    </property>
    <property name="text">
     <string>Auto cell switching</string>
+   </property>
+  </action>
+  <action name="actionConvert_file_Oscilloscope">
+   <property name="text">
+    <string>Convert file (Oscilloscope)</string>
+   </property>
+  </action>
+  <action name="actionOpen_file_excel">
+   <property name="text">
+    <string>Open file (Excel)</string>
    </property>
   </action>
  </widget>

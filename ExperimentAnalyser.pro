@@ -13,6 +13,7 @@ CONFIG += c++20
 SOURCES += \
     addnewexperimentform.cpp \
     chagechartsettingsform.cpp \
+    convert_oscilloscope_fileform.cpp \
     experiment_name_form.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -24,6 +25,7 @@ HEADERS += \
     SaveSettings.h \
     addnewexperimentform.h \
     chagechartsettingsform.h \
+    convert_oscilloscope_fileform.h \
     experiment_name_form.h \
     mainwindow.h \
     result_chart_form.h \
@@ -32,6 +34,7 @@ HEADERS += \
 FORMS += \
     addnewexperimentform.ui \
     chagechartsettingsform.ui \
+    convert_oscilloscope_fileform.ui \
     experiment_name_form.ui \
     mainwindow.ui \
     result_chart_form.ui \
@@ -45,6 +48,7 @@ CONFIG += lrelease
 CONFIG += embed_translations
 
 INCLUDEPATH += "C:/Program Files (x86)/OpenXLSX.Library/include/OpenXLSX"
+
 LIBS += -L"C:/Program Files (x86)/OpenXLSX.Library/lib" -lOpenXLSX
 LIBS += -L"C:/Program Files (x86)/OpenXLSX.Library/lib" -lOpenXLSXd
 

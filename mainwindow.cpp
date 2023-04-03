@@ -18,13 +18,20 @@ constexpr float default_min_Y = -100;
 constexpr std::pair<float, float> max_range = {500, 650};
 
 constexpr QColor Y_colomn_color = QColor{195, 255, 250};
-constexpr std::array<QColor, 10> colors = { QColor(31, 119, 180), QColor(255, 127, 14), QColor(44, 160, 44),
-                      QColor(214, 39, 40), QColor(148, 103, 189), QColor(140, 86, 75),
-                      QColor(227, 119, 194), QColor(127, 127, 127), QColor(188, 189, 34),
-                      QColor(23, 190, 207) };
+constexpr std::array<QColor, 30> colors = { QColor(31, 119, 180), QColor(255, 127, 14), QColor(44, 160, 44),
+                    QColor(214, 39, 40), QColor(148, 103, 189), QColor(140, 86, 75),
+                    QColor(227, 119, 194), QColor(127, 127, 127), QColor(188, 189, 34),
+                    QColor(23, 190, 207), QColor(234, 87, 153), QColor(129, 199, 132), QColor(100, 181, 246),
+                    QColor(102, 187, 106), QColor(255, 202, 40), QColor(156, 39, 176),
+                    QColor(205, 220, 57), QColor(121, 85, 72), QColor(239, 83, 80),
+                    QColor(255, 160, 0), QColor(121, 85, 72), QColor(171, 71, 188),
+                    QColor(63, 81, 181), QColor(255, 235, 59), QColor(76, 175, 80),
+                    QColor(255, 99, 71), QColor(0, 150, 136), QColor(255, 193, 7),
+                    QColor(48, 63, 159), QColor(255, 152, 0) };
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), result_form(new result_chart_form()), chart_settings_form(new chageChartSettingsForm()), save_to_file_form(new SaveToFileForm)
+    : QMainWindow(parent), ui(new Ui::MainWindow), result_form(new result_chart_form()), chart_settings_form(new chageChartSettingsForm()),
+      save_to_file_form(new SaveToFileForm), convert_oscilloscope_file_form(new ConvertOscilloscopeFileForm())
 {
     ui->setupUi(this);
     this->current_data_table_widget.table_widget = ui->current_table_listWidget;
@@ -43,7 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->current_table_listWidget->setColumnWidth(0, 62);
     ui->current_table_listWidget->setColumnWidth(1, 50);
     ui->current_table_listWidget->setLocale(QLocale::English);
-    //ui->current_table_listWidget->horizontalHeaderItem(3)->setSelected(true);
 
     ui->normalization_tableWidget->setColumnWidth(0, 80);
     ui->normalization_tableWidget->verticalHeader()->hide();
@@ -51,6 +57,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     DoubleSpinBoxDelegate *delegate = new DoubleSpinBoxDelegate;
     ui->normalization_tableWidget->setItemDelegate(delegate);
+
+    connect(ui->actionOpen_file_excel, &QAction::triggered, this, &MainWindow::action_open_excel_file_triggered);
+
+    connect(ui->actionConvert_file_Oscilloscope, &QAction::triggered, this, &MainWindow::action_convert_oscilloscope_file_triggered);
+    connect(convert_oscilloscope_file_form.get(), &ConvertOscilloscopeFileForm::form_closed, this, &MainWindow::convert_oscilloscope_form_closed);
+    convert_oscilloscope_file_form->setWindowFlags(convert_oscilloscope_file_form->windowFlags() & ~Qt::WindowMaximizeButtonHint);
 
     connect(ui->current_table_listWidget->verticalScrollBar(), &QScrollBar::valueChanged, ui->normalization_tableWidget->verticalScrollBar(),
         [this](int value){
@@ -72,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     double_spin_box_container->setSingleStep(ui->timeNumberDoubleSpinBox->singleStep());
     double_spin_box_container->setDecimals(ui->timeNumberDoubleSpinBox->decimals());
     double_spin_box_container->move(10, 30);
+    double_spin_box_container->setFixedSize(111, 30);
 
     delete ui->timeNumberDoubleSpinBox;
     ui->timeNumberDoubleSpinBox = double_spin_box_container.get();
@@ -116,8 +129,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {   
-    QString filename = QFileDialog::getOpenFileName(this, tr("Open File"), prev_filepath, tr("Text Files (*.txt);;All Files (*.*)"));
-    prev_filepath = remove_filename_from_path(filename);
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open File"), prev_open_filepath, tr("Text Files (*.txt);;All Files (*.*)"));
+    prev_open_filepath = remove_filename_from_path(filename);
     std::wifstream file(filename.toStdWString());
 
     try
@@ -132,7 +145,7 @@ void MainWindow::on_pushButton_clicked()
             float max_value = 0;
             float min_x = 1E+15f, max_x = -1E+15f;
             float min_y = 1E+15f, max_y = -1E+15f;
-            int colomns_number = 0;
+            int columns_number = 0;
 
             std::wstring line;
             line.reserve(100);
@@ -143,17 +156,17 @@ void MainWindow::on_pushButton_clicked()
             {
                 std::wstring num;
                 initial_stream >> num;
-                colomns_number++;
+                columns_number++;
             }
 
-            std::vector<QLineSeries> temp_qline_series_array(colomns_number / 2);
+            std::vector<QLineSeries> temp_qline_series_array(columns_number / 2);
 
             while (std::getline(file, line))
             {
                 std::wstringstream line_stream(line);
                 std::wstring num_x, num_y;
 
-                for (int i = 0; i < colomns_number; i += 2)
+                for (int i = 0; i < columns_number; i += 2)
                 {
                     line_stream >> num_x >> num_y;
                     float x = convert_string_comma_to_float(num_x);
@@ -189,6 +202,24 @@ void MainWindow::on_pushButton_clicked()
         QMessageBox::critical(this, tr("Error"), tr("File reading error"));
     }
     file.close();
+}
+
+void MainWindow::action_convert_oscilloscope_file_triggered()
+{
+    convert_oscilloscope_file_form->show();
+    this->setEnabled(false);
+    this->hide();
+}
+
+void MainWindow::convert_oscilloscope_form_closed()
+{
+    this->setEnabled(true);
+    this->show();
+}
+
+void MainWindow::action_open_excel_file_triggered()
+{
+
 }
 
 ChartSet::ChartSet(Ui::MainWindow* ui, QListWidget* lines_list_widget, std::list<ChartData>* chart_data_list, const size_t* current_chart_data_index)
@@ -483,6 +514,29 @@ void MainWindow::on_add_current_data_pushButton_clicked()
     add_current_data();
 }
 
+void DataListContainer::addTimePoint(double time, ExperimentPoint::TimeMeasurement measure, QComboBox *comboBox)
+{
+    point_list.append(ExperimentPoint(DataListContainer::convert_to_seconds(time, measure), measure));
+    for (int i = 0; i < experiment_names.size(); i++)
+    {
+        point_list[point_list.size() - 1].points.emplaceBack(1E+16, 1E+16);
+    }
+
+    is_inserting = true;
+    table_widget->insertRow(table_widget->rowCount());
+
+    QTableWidgetItem *t = new QTableWidgetItem();
+    t->setData(2, time);
+    t->setTextAlignment(Qt::AlignCenter);
+    table_widget->setItem(table_widget->rowCount() - 1, 0, t);
+
+    QTableWidgetItem *m = new QTableWidgetItem();
+    table_widget->setItem(table_widget->rowCount() - 1, 1, m);
+    comboBox->setCurrentIndex(measure);
+    table_widget->setCellWidget(table_widget->rowCount() - 1, 1, comboBox);
+    is_inserting = false;
+}
+
 void DataListContainer::addPoint(QPointF point, double time, ExperimentPoint::TimeMeasurement measure, QComboBox* comboBox)
 {
     point_list.append(ExperimentPoint(point, DataListContainer::convert_to_seconds(time, measure), measure));
@@ -529,8 +583,8 @@ void DataListContainer::deletePoint(int row)
 void DataListContainer::updatePoint_in_list(int row, bool use_normalization)
 {
     if (not is_inserting)
-    {       
-        point_list[row].seconds = table_widget->item(row, 0)->text().toFloat();
+    {
+        point_list[row].seconds = convert_to_seconds(table_widget->item(row, 0)->text().toDouble(), point_list[row].measure);
         int numColumns = table_widget->columnCount();
         for (int i = 2; i < numColumns; i += 2)
         {
@@ -587,6 +641,17 @@ void DataListContainer::addExperiment_name(QString name)
      experiment_names.append(name);
      for (auto& time_point : point_list)
          time_point.points.emplaceBack(1E+16, 1E+16);
+}
+
+void DataListContainer::addNormalization_line()
+{
+    is_inserting = true;
+    norm_table_widget->insertRow(norm_table_widget->rowCount());
+    QTableWidgetItem* norm = new QTableWidgetItem();
+    norm->setData(2, 1.0f);
+    norm->setTextAlignment(Qt::AlignCenter);
+    norm_table_widget->setItem(norm_table_widget->rowCount() - 1, 0, norm);
+    is_inserting = false;
 }
 
 void DataListContainer::changeNormalization_value(int row, double value, bool use_normalization)
@@ -930,22 +995,27 @@ void MainWindow::save_to_file_form_closed()
 
 void MainWindow::save_to_file_slot(const SaveSettings& settings)
 {
-    QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-        QString saveFilePath = QFileDialog::getSaveFileName(
-            nullptr,
-            "Save File",
-            defaultDir,
-            "Excel Files (*.xlsx);;CSV Files (*.csv);;Text Files (*.txt)"
-        );
+    QString saveFilePath;
 
+    if (settings.append_to_excel)
+        saveFilePath = QFileDialog::getOpenFileName(nullptr, "Append to excel file", prev_save_filepath, "Excel Files (*.xlsx)");
+    else
+        saveFilePath = QFileDialog::getSaveFileName(nullptr, "Save File", prev_save_filepath,
+                    "Excel Files (*.xlsx);;CSV Files (*.csv);;Text Files (*.txt)");
+    try
+    {
         if (not saveFilePath.isEmpty())
         {
+            prev_save_filepath = remove_filename_from_path(saveFilePath);
             if (QFileInfo(saveFilePath).suffix() == "xlsx")
             {
                 //saveFilePath.toStdString()
                 OpenXLSX::XLDocument doc;
 
-                doc.create(saveFilePath.toStdString());
+                if (settings.append_to_excel)
+                    doc.open(saveFilePath.toStdString());
+                else
+                    doc.create(saveFilePath.toStdString());
                 auto worksheet = doc.workbook().worksheet("Sheet1");
 
                 //start saving
@@ -953,6 +1023,11 @@ void MainWindow::save_to_file_slot(const SaveSettings& settings)
                 const QList<ExperimentPoint>& point_list = current_data_table_widget.getPointList();
                 //save column titles
                 int i_excel = 1, j_excel = 1;
+                if (settings.append_to_excel)
+                {
+                    while(worksheet.cell(i_excel, j_excel).value().type() != OpenXLSX::XLValueType::Empty)
+                        i_excel++;
+                }
                 if (settings.save_column_titles)
                 {
                     if (settings.time)
@@ -960,7 +1035,7 @@ void MainWindow::save_to_file_slot(const SaveSettings& settings)
                         std::string time_str = "time";
                         if (settings.time_measurement != 4)
                             time_str += ", " + DataListContainer::timeMeasurement_toQString(static_cast<ExperimentPoint::TimeMeasurement>(settings.time_measurement)).toStdString();
-                        worksheet.cell(1, 1).value() = time_str;
+                        worksheet.cell(i_excel, j_excel).value() = time_str;
                         j_excel++;
                     }
 
@@ -1132,9 +1207,19 @@ void MainWindow::save_to_file_slot(const SaveSettings& settings)
                 }
                 file.close();
             }
-            this->setEnabled(true);
-            save_to_file_form->hide();
+            QMessageBox::information(this, tr("File saving"), tr("Complete!"));
         }
+    }
+    catch(std::runtime_error& ex)
+    {
+        QMessageBox::critical(this, tr("Error"), tr(ex.what()));
+    }
+    catch(...)
+    {
+        QMessageBox::critical(this, tr("Error"), tr("File saving error"));
+    }
+    this->setEnabled(true);
+    save_to_file_form->hide();
 }
 
 void MainWindow::add_current_data()
@@ -1149,14 +1234,7 @@ void MainWindow::add_current_data()
                              });
         double time = ui->timeNumberDoubleSpinBox->value();
         current_data_table_widget.addPoint(chart_set->chartView.getXY(), time, current_time_measure, comboBox);
-
-        current_data_table_widget.is_inserting = true;
-        ui->normalization_tableWidget->insertRow(ui->normalization_tableWidget->rowCount());
-        QTableWidgetItem* norm = new QTableWidgetItem();
-        norm->setData(2, 1.0f);
-        norm->setTextAlignment(Qt::AlignCenter);
-        ui->normalization_tableWidget->setItem(ui->normalization_tableWidget->rowCount() - 1, 0, norm);
-        current_data_table_widget.is_inserting = false;
+        current_data_table_widget.addNormalization_line();
 
         auto v_scroll_bar = current_data_table_widget.table_widget->verticalScrollBar();
         v_scroll_bar->setValue(v_scroll_bar->maximum());
@@ -1182,14 +1260,14 @@ void MainWindow::add_current_data()
         int row = ui->normalization_tableWidget->currentRow();
         if (row >= 0)
         {
-            if (abs(point.y()) > 1e-6 )
+            if (abs(point.y()) > 1e-9 )
             {
                 current_data_table_widget.changeNormalization_value(row, point.y(), ui->use_normalization_checkBox->isChecked());
                 current_data_table_widget.select_cell_to_add_norm_value();
             }
             else
             {
-                QMessageBox::warning(this, "Warning", tr("the value must not be zero"));
+                QMessageBox::warning(this, "Warning", tr("The value must not be zero"));
             }
         }
         current_data_table_widget.norm_table_widget->setFocus();
@@ -1210,12 +1288,21 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    chart_settings_form->hide();
-    save_to_file_form->hide();
-    experiment_name_change_form->hide();
-    add_new_experiment_form->hide();
-    result_form->hide();
-    QWidget::closeEvent(event);
+    QMessageBox::StandardButton reply = QMessageBox::question(this, tr("Exit"), tr("Are you sure you want to exit?"), QMessageBox::Cancel | QMessageBox::Ok);
+    if (reply == QMessageBox::Ok)
+    {
+        chart_settings_form->hide();
+        save_to_file_form->hide();
+        experiment_name_change_form->hide();
+        add_new_experiment_form->hide();
+        result_form->hide();
+        convert_oscilloscope_file_form->hide();
+        QWidget::closeEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
 }
 
 
@@ -1385,7 +1472,6 @@ void MainWindow::on_use_normalization_checkBox_stateChanged(int arg1)
     for (int i = 0; i < current_data_table_widget.table_widget->rowCount(); ++i)
         current_data_table_widget.normalize_row_in_table_widget(i, arg1);
 }
-
 
 void MainWindow::on_add_time_point_radioButton_clicked(bool checked)
 {

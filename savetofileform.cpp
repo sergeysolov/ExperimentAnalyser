@@ -73,6 +73,11 @@ void SaveToFileForm::on_save_pushButton_clicked()
         settings.y = true;
         at_least_one = true;
     }
+    if (ui->save_noramization_checkBox->isChecked())
+    {
+        settings.save_norm_column = true;
+        at_least_one = true;
+    }
     if (not at_least_one)
     {
         QMessageBox::warning(this, tr("Warning"), tr("Choose as least one values type"));
@@ -82,8 +87,8 @@ void SaveToFileForm::on_save_pushButton_clicked()
         settings.time_measurement = extract_time_measurement();
         settings.comma = ui->comma_radioButton->isChecked();
         settings.normalize_y = ui->save_normalized_y_checkBox->isChecked();
-        settings.save_norm_column = ui->save_noramization_checkBox->isChecked();
         settings.save_column_titles = ui->save_column_titles_checkBox->isChecked();
+        settings.append_to_excel = ui->append_to_excel_file_checkBox->isChecked();
 
         for (int i = 0; i < ui->experiments_listWidget->count(); i++)
         {
@@ -139,5 +144,18 @@ void SaveToFileForm::on_x_checkBox_stateChanged(int arg1)
         ui->experiments_listWidget->setEnabled(false);
     else
         ui->experiments_listWidget->setEnabled(true);
+}
+
+
+void SaveToFileForm::on_append_to_excel_file_checkBox_stateChanged(int arg1)
+{
+    if (arg1)
+    {
+        ui->save_column_titles_checkBox->setChecked(false);
+    }
+    else
+    {
+        ui->save_column_titles_checkBox->setChecked(true);
+    }
 }
 

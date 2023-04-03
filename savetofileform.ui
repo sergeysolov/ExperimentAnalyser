@@ -273,6 +273,19 @@
     <string>Save column titles</string>
    </property>
   </widget>
+  <widget class="QCheckBox" name="append_to_excel_file_checkBox">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>300</y>
+     <width>221</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Append to existing excel file</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

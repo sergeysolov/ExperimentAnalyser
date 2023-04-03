@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <array>
+#include <algorithm>
 
 #include <QMainWindow>
 #include <QChart>
@@ -32,6 +33,7 @@
 #include "SaveSettings.h"
 #include "experiment_name_form.h"
 #include "addnewexperimentform.h"
+#include "convert_oscilloscope_fileform.h"
 
 #include <OpenXLSX.hpp>
 
@@ -154,6 +156,10 @@ public:
     {
         points.append(point);
     }
+    ExperimentPoint(double seconds, TimeMeasurement measure) :
+        seconds(seconds), measure(measure)
+    {   }
+
     void append_experiment_value(QPointF point);
     void change_experiment_value(QPointF point, int index);
 
@@ -175,12 +181,14 @@ public:
     bool is_inserting = false;
     bool auto_cell_switch = true;
 
+    void addTimePoint(double time, ExperimentPoint::TimeMeasurement measure, QComboBox* comboBox);
     void addPoint(QPointF point, double time, ExperimentPoint::TimeMeasurement measure, QComboBox* comboBox);
     void deletePoint(int row);
     void updatePoint_in_list(int row, bool use_normalization);
     void updateMeasure_in_list(int row, ExperimentPoint::TimeMeasurement measure);
     void addExperiment_point(int row, int colomn, QPointF point, bool normalize);
     void addExperiment_name(QString name);
+    void addNormalization_line();
     void changeNormalization_value(int row, double value, bool use_normalization);
     void changeExperiment_name(QString name, int index);
     void removeExperiment_name(int index);
@@ -195,11 +203,10 @@ public:
     static QComboBox* create_measure_ComboBox();
     static double convert_to_measure(double seconds, ExperimentPoint::TimeMeasurement measure);
     static QString timeMeasurement_toQString(ExperimentPoint::TimeMeasurement measure);
-
-protected:    
-    static double convert_to_seconds(double time, ExperimentPoint::TimeMeasurement measure);   
     static ExperimentPoint::TimeMeasurement qString_to_timeMeasurement(const QString& measure);
+    static double convert_to_seconds(double time, ExperimentPoint::TimeMeasurement measure);
 
+protected:          
     bool show_x = true;
     QList<QString> experiment_names;
     QVector<ExperimentPoint> point_list;
@@ -242,6 +249,9 @@ public:
 
 private slots:
     void on_pushButton_clicked();
+    void action_convert_oscilloscope_file_triggered();
+    void convert_oscilloscope_form_closed();
+    void action_open_excel_file_triggered();
     void on_add_current_data_pushButton_clicked();   
 
     void on_secondsRadioButton_clicked();
@@ -297,15 +307,18 @@ private:
     size_t current_chart_data_index = 0;
 
     void add_current_data();
-    ExperimentPoint::TimeMeasurement current_time_measure = ExperimentPoint::TimeMeasurement::t_seconds;    
+    ExperimentPoint::TimeMeasurement current_time_measure = ExperimentPoint::TimeMeasurement::t_seconds;
+    int save_every_value = 1;
 
     std::unique_ptr<result_chart_form> result_form;
     std::unique_ptr<chageChartSettingsForm> chart_settings_form;
     std::unique_ptr<SaveToFileForm> save_to_file_form;
     std::unique_ptr<Experiment_Name_Form> experiment_name_change_form = nullptr;
     std::unique_ptr<AddNewExperimentForm> add_new_experiment_form = nullptr;
+    std::unique_ptr<ConvertOscilloscopeFileForm> convert_oscilloscope_file_form = nullptr;
 
-    QString prev_filepath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    QString prev_open_filepath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    QString prev_save_filepath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     void keyPressEvent(QKeyEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 };

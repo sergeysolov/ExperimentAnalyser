@@ -35,6 +35,7 @@ private slots:
     void on_dot_radioButton_clicked();
     void on_y_checkBox_stateChanged(int arg1);
     void on_x_checkBox_stateChanged(int arg1);
+    void on_append_to_excel_file_checkBox_stateChanged(int arg1);
 };
 
 #endif // SAVETOFILEFORM_H
