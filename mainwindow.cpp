@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->current_data_table_widget.norm_table_widget = ui->normalization_tableWidget;
     this->current_data_table_widget.addExperiment_name("y1");
     this->current_data_table_widget.set_show_x(false);
+    this->current_data_table_widget.table_widget->installEventFilter(this);
 
     experiment_name_change_form.reset(new Experiment_Name_Form());
     connect(experiment_name_change_form.get(), &Experiment_Name_Form::form_closed, this, &MainWindow::change_experiment_name_form_closed);
@@ -193,7 +194,7 @@ void MainWindow::on_pushButton_clicked()
             auto axes = ChartSet::createQValueAxes(fit_to_line_range, max_value);
 
             chart_data_list.emplace_back(std::move(temp_qline_series_array),fit_to_line_range, max_value, axes.first, axes.second, "Amplitude");
-            chart_set->show_plots(chart_data_list.back());
+            chart_set->show_plots(chart_data_list.back(), QChart::AllAnimations);
             current_chart_data_index = chart_data_list.size() - 1;
         }
     }
@@ -226,7 +227,7 @@ ChartSet::ChartSet(Ui::MainWindow* ui, QListWidget* lines_list_widget, std::list
     : lines_list_widget(lines_list_widget), chart_data_list(chart_data_list), current_chart_data_index(current_chart_data_index)
 {
     chart.setParent(ui->horizontalFrame);
-    chart.setAnimationOptions(QChart::AllAnimations);
+    chart.setAnimationOptions(QChart::SeriesAnimations);
     chart.legend()->setVisible(true);
     auto font = chart.legend()->font();
     font.setPointSize(12);
@@ -245,7 +246,7 @@ std::pair<QValueAxis *, QValueAxis *> ChartSet::createQValueAxes(AxesRange fit_t
     float min_y = fit_to_line_range.min_y, max_y = fit_to_line_range.max_y;
 
     QValueAxis* axis_X = new QValueAxis();
-    axis_X->setTitleText("Wawelength, nm");
+    axis_X->setTitleText("Wavelength, nm");
     if (current_range.mode == AxesMode::Default)
     {
         axis_X->setRange(default_min_X, default_max_X);
@@ -590,12 +591,14 @@ void DataListContainer::updatePoint_in_list(int row, bool use_normalization)
         {
             QTableWidgetItem* item_x = table_widget->item(row, i);
             QTableWidgetItem* item_y = table_widget->item(row, i + 1);
-            if (item_x != nullptr and item_y != nullptr)
+            if (not (item_x == nullptr and item_y == nullptr))
             {
+                float x = (item_x == nullptr) ? 0 : item_x->text().toFloat();
+                float y = (item_y == nullptr) ? 0 : item_y->text().toFloat();
                 if (not use_normalization)
-                    point_list[row].points[(i - 2) / 2] = QPointF(item_x->text().toFloat(), item_y->text().toFloat());
+                    point_list[row].points[(i - 2) / 2] = QPointF(x, y);
                 else
-                    point_list[row].points[(i - 2) / 2] = QPointF(item_x->text().toFloat(), item_y->text().toFloat() * norm_table_widget->item(row, 0)->text().toDouble());
+                    point_list[row].points[(i - 2) / 2] = QPointF(x, y * norm_table_widget->item(row, 0)->text().toDouble());
             }
         }
     }
@@ -739,6 +742,63 @@ bool DataListContainer::select_cell_to_add_norm_value()
     }
     return false;
 }
+
+void DataListContainer::move_line(Direction direction)
+{
+    int current_index = table_widget->currentRow();
+    if (current_index < 0 or table_widget->rowCount() <= 1)
+        return;
+
+    int next_index;
+    if (direction == Direction::upwards)
+    {
+        next_index = (current_index - 1) % table_widget->rowCount();
+        if (next_index < 0)
+            next_index = table_widget->rowCount() - 1;
+    }
+    else if (direction == Direction::downwards)
+        next_index = (current_index + 1) % table_widget->rowCount();
+    else
+        return;
+
+    table_widget->blockSignals(true);
+    norm_table_widget->blockSignals(true);
+
+    for (int i = 0; i < table_widget->columnCount(); i++)
+    {
+        QTableWidgetItem* item1 = table_widget->takeItem(current_index, i);
+        QTableWidgetItem* item2 = table_widget->takeItem(next_index, i);
+        if (i == 1)
+        {
+            QComboBox* box1 = qobject_cast<QComboBox*>(table_widget->cellWidget(current_index, 1));
+            QComboBox* box2 = qobject_cast<QComboBox*>(table_widget->cellWidget(next_index, 1));
+            int r1 = box1->currentIndex();
+            int r2 = box2->currentIndex();
+            box1->setCurrentIndex(r2);
+            box2->setCurrentIndex(r1);
+
+        }
+        table_widget->setItem(current_index, i, item2);
+        table_widget->setItem(next_index, i, item1);
+    }
+
+    point_list.swapItemsAt(current_index, next_index);
+
+    QTableWidgetItem* item1 = norm_table_widget->takeItem(current_index, 0);
+    QTableWidgetItem* item2 = norm_table_widget->takeItem(next_index, 0);
+    norm_table_widget->setItem(current_index, 0, item2);
+    norm_table_widget->setItem(next_index, 0, item1);
+
+
+    table_widget->clearSelection();
+    table_widget->selectRow(next_index);
+    norm_table_widget->clearSelection();
+    norm_table_widget->selectRow(next_index);
+
+    table_widget->blockSignals(false);
+    norm_table_widget->blockSignals(false);
+}
+
 
 const QList<QString> &DataListContainer::get_experiment_names() const
 {
@@ -907,7 +967,7 @@ void MainWindow::action_change_Y_name_to_amplitude()
         data_list_it->axis_Y->setMinorTickCount(Y_minor_tick_count);
         data_list_it->axis_Y->applyNiceNumbers();
         data_list_it->fit_to_line_ranges.mode = AxesMode::Default;
-        chart_set->show_plots(*data_list_it);
+        chart_set->show_plots(*data_list_it, QChart::AllAnimations);
     }
     else
     {
@@ -928,7 +988,7 @@ void MainWindow::action_change_Y_name_to_reflection()
         data_list_it->axis_Y->setMinorTickCount(Y_minor_tick_count);
         data_list_it->axis_Y->applyNiceNumbers();
         data_list_it->fit_to_line_ranges.mode = AxesMode::Default;
-        chart_set->show_plots(*data_list_it);
+        chart_set->show_plots(*data_list_it, QChart::AllAnimations);
     }
     else
     {
@@ -949,7 +1009,7 @@ void MainWindow::action_change_Y_name_to_absorbtion()
         data_list_it->axis_Y->setMinorTickCount(Y_minor_tick_count);
         data_list_it->axis_Y->applyNiceNumbers();
         data_list_it->fit_to_line_ranges.mode = AxesMode::Default;
-        chart_set->show_plots(*data_list_it);
+        chart_set->show_plots(*data_list_it, QChart::AllAnimations);
     }
     else
     {
@@ -984,7 +1044,7 @@ void MainWindow::change_chart_setting_form_closed(std::pair<bool, AxesRange> res
         data_list_it->axis_X.reset(axes.first);
         data_list_it->axis_Y.reset(axes.second);
         data_list_it->axis_Y->setTitleText(data_list_it->title);
-        chart_set->show_plots(*data_list_it);
+        chart_set->show_plots(*data_list_it, QChart::AllAnimations);
     }
 }
 
@@ -1272,6 +1332,28 @@ void MainWindow::add_current_data()
         }
         current_data_table_widget.norm_table_widget->setFocus();
     }
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->modifiers() == Qt::ControlModifier)
+        {
+            if (keyEvent->key() == Qt::Key_Up)
+            {
+                current_data_table_widget.move_line(DataListContainer::upwards);
+                return true;
+            }
+            else if (keyEvent->key() == Qt::Key_Down)
+            {
+                current_data_table_widget.move_line(DataListContainer::downwards);
+                return true;
+            }
+        }
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)

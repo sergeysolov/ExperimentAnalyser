@@ -117,7 +117,7 @@ public:
     ChartSet(Ui::MainWindow* ui, QListWidget* lines_list_widget, std::list<ChartData>* chart_data_list, const size_t* current_chart_data_index);
 
     static std::pair<QValueAxis*, QValueAxis*> createQValueAxes(AxesRange fit_to_line_range, float default_max_Y);
-    void show_plots(ChartData& data, QChart::AnimationOption option = QChart::AllAnimations, bool rebuild_lines_list_widget = true);
+    void show_plots(ChartData& data, QChart::AnimationOption option = QChart::AnimationOption::SeriesAnimations, bool rebuild_lines_list_widget = true);
     void next_line();
     void prev_line();
     void turn_on_all_lines();
@@ -173,7 +173,13 @@ public:
 
 class DataListContainer
 {
-public:
+public: 
+    enum Direction
+    {
+        upwards,
+        downwards
+    };
+
     DataListContainer() = default;
 
     QTableWidget* table_widget = nullptr;
@@ -196,6 +202,7 @@ public:
     void set_show_x(bool is_show);
     bool select_cell_to_add_exp_point();
     bool select_cell_to_add_norm_value();
+    void move_line(Direction direction);
 
     const QList<QString>& get_experiment_names() const;
     const QList<ExperimentPoint>& getPointList() const;
@@ -307,18 +314,20 @@ private:
     size_t current_chart_data_index = 0;
 
     void add_current_data();
+
     ExperimentPoint::TimeMeasurement current_time_measure = ExperimentPoint::TimeMeasurement::t_seconds;
     int save_every_value = 1;
 
-    std::unique_ptr<result_chart_form> result_form;
-    std::unique_ptr<chageChartSettingsForm> chart_settings_form;
-    std::unique_ptr<SaveToFileForm> save_to_file_form;
+    std::unique_ptr<result_chart_form> result_form = nullptr;
+    std::unique_ptr<chageChartSettingsForm> chart_settings_form = nullptr;
+    std::unique_ptr<SaveToFileForm> save_to_file_form = nullptr;
     std::unique_ptr<Experiment_Name_Form> experiment_name_change_form = nullptr;
     std::unique_ptr<AddNewExperimentForm> add_new_experiment_form = nullptr;
     std::unique_ptr<ConvertOscilloscopeFileForm> convert_oscilloscope_file_form = nullptr;
 
     QString prev_open_filepath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     QString prev_save_filepath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    bool eventFilter(QObject* obj, QEvent* event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 };

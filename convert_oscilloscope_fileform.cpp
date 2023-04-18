@@ -146,7 +146,7 @@ void ConvertOscilloscopeFileForm::on_convert_pushButton_clicked()
             worksheet.cell(i + 2, 1).value() = data[i].first / time_divider;
             worksheet.cell(i + 2, 2).value() = amplitude;
 
-            int progress_bar_value = 50 + (i / static_cast<double>(lines_number)) * 50;
+            int progress_bar_value = 50 + (i / static_cast<double>(lines_number)) * 50 * save_every_value;
             if (progress_bar_value > ui->progressBar->value())
                 ui->progressBar->setValue(progress_bar_value);
         }
